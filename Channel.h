@@ -48,9 +48,64 @@ class Channel{
             std::shared_ptr<HttpData> ret(holder_.lock());
             return ret;
         }
-
+        // 右值引用
         void setReadHandler(CallBack &&readHandler){
             readHandler_ = readHandler;
         }
-        
+
+        void setErrorHandler(CallBack &&writeHandler){
+            writeHandler_ = writeHandler;
+        }
+
+        void setConnHandler(CallBack &&connHandler){
+            connHandler_ = connHandler;
+        }
+
+        void handleEvents(){
+            
+            events_ = 0;
+            // 对应的文件描述符被挂断；对应的文件描述符（不）可以读
+            if((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {
+                events_ = 0;
+                return ;
+            }
+            // 有连接或者数据来临， 对应的文件描述符有紧急的数据可读
+            // 对 EPOLLHUP和EPOLLRDHUP 的一个对比 https://codeday.me/bug/20190228/692013.html            
+            if(revents_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)){
+                handleRead();
+            }
+
+            if(revents_ & EPOLLOUT){
+                handleWrite();
+            }
+
+            hanleConn();
+        }
+
+        void handleRead();
+        void handleWrite();
+        void handleConn();
+        void handleError(int fd, int err_num, std::string short_msg);
+
+        void setRevents(_uint32_t ev){
+            revents_ = ev;
+        }
+
+        void setEvents(_uint32_t ev){
+            events_ = ev;
+        }
+
+        bool EqyalAndUpdataLastEvents(){
+            bool ret = (lastEvents_ == events_);
+            lastEvents_ = events_;
+            return ret;
+        }
+
+        _uint32_t getLastEcvents(){
+            return lastEvents_;
+        }
+            return ;
+        };
 }
+
+typedef std::shared_ptr<Channel> SP_Channel;
