@@ -1,6 +1,6 @@
 #ifndef _EVENTLOOP_H
 #define _EVENTLOOP_H
-
+// Event为事件循环，每次从poller中拿取活跃的事件，然后分发到channel中进行分发处理
 #include <functional>
 #include <memory>
 #include <vector>

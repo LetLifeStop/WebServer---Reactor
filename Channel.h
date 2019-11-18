@@ -12,14 +12,18 @@ class HttpData;
 
 //std::function 可以是新对各种可调用实体的封装，可以处理不同函数对象类型
 
-
+// 保存fd和需要监听的events，以及各种回调函数
 class Channel{
   private:
     // 定义回调函数
     typedef std::function<void()> CallBack;
+    // 所属的EventLoop
     EventLoop *loop_;
+    // 文件描述符
     int fd_;
+    // 
     _uint32_t events_;
+    // poll/epoll 返回的事件
     _uint32_t revents_;
     _uint32_t   lastEvents_;
 
@@ -29,10 +33,13 @@ class Channel{
       int parse_URI();
       int parse_Headers();
       int analysisRequest();
-
+      // 可读回调函数
       CallBack readHandler_;
+      // 可写回调函数
       CallBack writeHandler_;
+      // 错误调函数
       CallBack errorHandler_;
+      // 关闭函数
       CallBack connHandler_;
 
       public:
@@ -44,7 +51,7 @@ class Channel{
 
         void setHolder(std::shared_ptr<HttpData> holder) { holder_ = hoder; }
         std::shared_ptr<HttpData> getHolder(){
-            // 如果expired为 0的话，返回一个指向holder的对象的shared_ptr指针
+            // 如果expired为0的话，返回一个指向holder的对象的shared_ptr指针
             std::shared_ptr<HttpData> ret(holder_.lock());
             return ret;
         }
@@ -101,7 +108,7 @@ class Channel{
             return ret;
         }
 
-        _uint32_t getLastEcvents(){
+        _uint32_t getLastEvents(){
             return lastEvents_;
         }
             return ;
