@@ -81,7 +81,7 @@ class Channel{
             if(revents_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)){
                 handleRead();
             }
-
+            // 有数据通过文件描述符写入
             if(revents_ & EPOLLOUT){
                 handleWrite();
             }

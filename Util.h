@@ -9,6 +9,7 @@ ssize_t writen(int fd, void *buff, size_t n);
 ssize_t writen(int fd, std::string &sbuff);
 
 void handle_for_sigpipe();
+// 对信号的处理
 int setSocketNonBlocking(int fd);
 void setSocketNodelay(int fd);
 void setSocketNoLinger(int fd);
