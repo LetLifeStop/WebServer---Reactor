@@ -11,7 +11,7 @@ class Epoll {
   public:
     Epoll();
     ~Epoll();
-    // SP_Channel是在Channel.h中定义的一个weak_ptr指针
+    // SP_Channel是指向channel的一个弱指针
     void epoll_add(SP_Channel request, int timeout);
     void epoll_mod(SP_Channel request, int timeout);
     void epoll_del(SP_Channel request);

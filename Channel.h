@@ -21,7 +21,6 @@ class Channel{
     EventLoop *loop_;
     // 文件描述符
     int fd_;
-    // 
     _uint32_t events_;
     // poll/epoll 返回的事件
     _uint32_t revents_;
@@ -102,7 +101,7 @@ class Channel{
             events_ = ev;
         }
 
-        bool EqyalAndUpdataLastEvents(){
+        bool EqualAndUpdataLastEvents(){
             bool ret = (lastEvents_ == events_);
             lastEvents_ = events_;
             return ret;
