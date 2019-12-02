@@ -14,7 +14,7 @@ int createEventfd() {
     if(evtfd < 0){
         LOG << "Failed in eventfd";
         abort();
-        // 终止程序运行
+        // 终�?�程序运�?
     }
     return evtfd;
 }
@@ -39,7 +39,9 @@ EventLoop::EventLoop ():
     pwakeupChannel_->setReadHandler(bind(&EventLoop::handleRead, this));
     pwakeupChannel_->setConnhandler(bind(&EventLoop::handleConn, this));
     poller_->epoll_add(pwakeupChannel_, 0);
-    
+}
+
+
 
 
 

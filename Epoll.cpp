@@ -19,7 +19,7 @@ typedef shared_ptr<channel> SP_Channel;
 
 Epoll::Epoll() : epollFD_(epoll_create1(EPOLL_CLOEXEC)), events(EVENTSUM) {
     assert(epollFD_ > 0);
-    // EPOLL_CLOEXEC 当 close-on-exec状态为0的时候，调用exec的时候，fd不会被关闭
+    // EPOLL_CLOEXEC �? close-on-exec状态为0的时候，调用exec的时候，fd不会被关�?
     // 状态非零的时候，文件描述符会被关闭， 防止fd泄露给exec后的进程
 }
 
@@ -34,7 +34,7 @@ void Epoll::epoll_add(SP_Channel request, int timeout) {
     struct epoll_event event;
     event.data.fd = fd;
     event.events = request->getEvents();
-    // 感兴趣的事情和被触发的事件
+    // 感兴趣的事情和被触发的事�?
     request->EqualAndUpdateLastEvents();
 
     fd2chan_[fd] = request;
@@ -50,7 +50,7 @@ void Epoll::epoll_mod(SP_Channel request, int timeout){
     if(timeout > 0)
       add_timer(request, timeout);
     if(!request->EqualAndUpdateLastEvents()) {
-    // 为什么是不相等的时候才进行更新 ？
+    // 为什么是不相等的时候才进行更新 �?
         struct epoll_event event;
         event.data.fd = fd;
         event.events = request->getEvents();
@@ -60,5 +60,57 @@ void Epoll::epoll_mod(SP_Channel request, int timeout){
             fd2chan_[fd].reset();
         }
     } 
+}
+
+void Epoll::epoll_del(SP_Channel request) {
+    int fd = request->getFd();
+    struct epoll_event event;
+    event.data.fd = fd;
+    event.events = request->getLastEvents();
+
+    if(epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, &event) < 0){
+        perror("Epoll_del error");
+    }
+    fd2chan_[fd].reset();
+    fd2http_[fd].reset();
+}
+
+std::vector<SP_Channel>Epoll::poll() {
+    while(1){
+      int event_count = epoll_wait(epollFd_, &*events_.begin(), events_.size(), EPOLLWAIT_TIME);
+      if(event_count < 0){
+          perror("epoll wait error");
+      }
+      std::vector<SP_Channel> req_data = getEventsRequest(event_count);
+      if(req_data.size() > 0)
+        return req_data;
+    }
+}
+
+std::vector<SP_Channel> Epoll::getEventsRequest(int events_num){
+    std::vector<SP_Channel> req_data;
+    int i;
+    for(i = 0; i < events_num; i++){
+        int fd = events_[i].data.fd;
+        SP_Channel cur_req = fd2chan_[fd];
+
+        if(cur_req){
+            cur_req->setRevents(events_[i].events);
+            cur_req->setEvents(0);
+            req_data.push_back(cur_req);
+        }
+        else {
+            LOG << "SP cur_req is invalid";
+        }
+    }
+    return req_data;
+}
+
+void Epoll::add_timer(SP_Channel request_data, int timeout){
+    shared_ptr<HttpData> t = request_data->getHolder();
+    if(t)
+      timerManager_.addTimer(t, timeout);
+    else 
+      LOG << "timer add fail";
 }
 

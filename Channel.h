@@ -68,7 +68,7 @@ class Channel{
         }
 
         void handleEvents(){
-            
+            //根据事件类型进行分发
             events_ = 0;
             // 对应的文件描述符被挂断；对应的文件描述符（不）可以读
             if((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {
