@@ -26,7 +26,8 @@ class AsynLogging : noncopyable {
       private:
         void threadFunc();
         typedef FixedBuffer<kLargeBuffer> Buffer;
-        typedef std::vector<std::shared_ptr<Buffer>> BufferVector;
+        // FixedBuffer是在LogStream中声明的
+        typedef std::vector< std::shared_ptr<Buffer> > BufferVector;
         typedef std::shared_ptr<Buffer> BufferPtr;
         const int flushInterval_;
         bool running_;
