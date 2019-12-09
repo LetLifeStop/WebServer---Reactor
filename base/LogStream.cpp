@@ -10,7 +10,7 @@ const char digits[] = "9876543210123456789";
 const char* zero = digits + 9;
 
 template<typename T>
-size_t convert(char buff[], T value) {
+size_t convert(char buf[], T value) {
     T i = value;
     char* p = buf;
 
@@ -19,5 +19,72 @@ size_t convert(char buff[], T value) {
       i /= 10;
       *p++ = zero[lsd];
     } while (i != 0);
-    
+
+    if(value < 0) {
+      *p++ = '-';
+    }
+    *p = '\0';
+    // 将字符串倒置
+    std::reverse(buf, p);
+}
+
+template class FixBuffer<kSmallBuffer>;
+template class FixBuffer<kLargeNuffer>;
+
+template <typename T>
+void LogStream::formatInteger(T v) {
+  if(buffer_.avail() >= kMaxNumericSize) {
+    size_t len = convert(buffer_.current(), v);
+    buffer_.add(len);
+  }
+}
+
+LogStream& LogStream::operator << (short v) {
+  *this << static_cast<int>(v);
+  return *this;
+}
+
+LogStream& LogStream::operator << (unsigned short v) {
+  formatInterger(v);
+  return *this;
+}
+
+LogStream& LogStream::operator << (long v) {
+   formatInterger(v);
+  return *this;
+}
+
+LogStream& LogStream::operator << (unsigned long v) {
+   formatInterger(v);
+  return *this;
+}
+
+
+LogStream& LogStream::operator << (long long v) {
+   formatInterger(v);
+  return *this;
+}
+
+
+LogStream& LogStream::operator << (unsigned long long v) {
+   formatInterger(v);
+  return *this;
+}
+
+
+LogStream& LogStream::operator << (double v) {
+ if(buffer_.avail() >= kMaxNumbericSize) {
+   int len = snprintf(buffer_.current(), kMaxNumbericSize, "%.12g", v);
+   buffer_.add(len);
+ }
+  return *this;
+}
+
+
+LogStream& LogStream::operator << (long v) {
+   if(buffer_.avail() >= kMaxNumbericSize) {
+   int len = snprintf(buffer_.current(), kMaxNumbericSize, "%.12Lg", v);
+   buffer_.add(len);
+ }
+  return *this;
 }
