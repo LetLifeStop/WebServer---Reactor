@@ -6,14 +6,19 @@
 #include "LogStream.h"
 
 class AsyncLogging;
-
+// set port and 
 class Logger {
   
   public:
     Logger(const char *fileName, int line);
     ~Logger();
     LogStream &stream() { return impl_.stream_; }
-
+    static void setLogFileName(std::string fileName) {
+      logFileName_ = fileName;
+    }
+    static std::string getLogFileName() {
+      return logFileName_;
+    }
 
   private:
     class Impl {

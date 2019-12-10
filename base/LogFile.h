@@ -4,11 +4,10 @@
 #include "FileUtil.h"
 #include "MutexLock.h"
 #include "noncopyable.h"
-
+// package the FileUtil further and set a const number that flush the buffer when the number of append greater than or equal the const number
 class LogFile : noncopyable {
   
   public:
-  
     LogFile(cosnt std::string& basename, int flushEveryN = 1024);
     ~logFile();
     void append(const char* logline, int len);
