@@ -24,7 +24,7 @@ size_t convert(char buf[], T value) {
       *p++ = '-';
     }
     *p = '\0';
-    // 将字符串倒置
+    // exchange the buf and p
     std::reverse(buf, p);
 }
 

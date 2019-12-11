@@ -19,7 +19,7 @@ class FixedBuffer : noncopyable{
             cur_ += len;
         }
     }
-    // 返回sizeof(data_),但是为什么要这么麻烦？是因为权限的关系？
+    // avail() equal strlen(data_); compare with strlen(data_), this way might save time 
     int avail() const { return static_cast<int>(end() - data_); }
     
     void add(size_t len) { cur_ += len; }
