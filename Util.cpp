@@ -176,11 +176,11 @@ void setSocketLinger(int fd){
     setsockopt(fd, SOL_SOCKET, SO_LINGER, (const char *)&linger_, sizeof(linger));
 }
 
-void socket_bind_listen(int port){
+void socket_bind_listen(int port) {
     if(port < 0 || port > 65535)
       return -1;
     int listen_fd = 0;
-    if((listen_fd = socker(AF_INET, SOCK_STREAM, 0)) == -1)
+    if((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
       return -1;
     int optval = 1;
     if(setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1){

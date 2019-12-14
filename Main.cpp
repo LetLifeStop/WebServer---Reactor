@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
             }
             case 'l': {
                 logPath = optarg;
-                if(logPath.size() > 2 || optarg[0] != '/') {
+                if(logPath.size() < 2 || optarg[0] != '/') {
                     printf("logPath should start with \"/\"\n");
                     abort();
                 }
