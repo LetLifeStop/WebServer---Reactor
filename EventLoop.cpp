@@ -14,7 +14,7 @@ int createEventfd() {
     if(evtfd < 0){
         LOG << "Failed in eventfd";
         abort();
-        // ç»ˆæ?¢ç¨‹åºè¿è¡?
+        // ç»ˆæ?¢ç¨‹åºè¿è¡?
     }
     return evtfd;
 }
@@ -29,10 +29,10 @@ EventLoop::EventLoop ():
     threadId_(CurrentThread::tid()),
     pwakeupChannel_(new Channel(this, wakeupFd_)) {
       if(t_loopInthisThread) {
-      LOG << "Another EventLoop" << t_loopInthisThread << "exists "; 
-    }
+        LOG << "Another EventLoop" << t_loopInthisThread << "exists "; 
+      }
       else 
-    t_loopInthisThread = this;
+        t_loopInthisThread = this;
     }
 
     pwakeupChannel_->setEvents(EPOLLIN | EPOLLET);

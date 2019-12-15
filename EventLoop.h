@@ -1,5 +1,4 @@
 // Event为事件循环，每次从poller中拿取活跃的事件，然后分发到channel中进行分发处理
-
 #include <functional>
 #include <memory>
 #include <vector>
@@ -18,10 +17,10 @@ class EventLoop {
     EventLoop();
     ~EventLoop();
     void loop();  // 核心函数，当创建一个EventLoop实体的时候，调用这个函数，启动事件循环
-    void quit();  // 
+    void quit(); 
     void runInLoop(Functor&& cb);
-    void queueInLoop(Finctor&& cb);
-    // 判断是否在中就绪事件中 ?
+    void queueInLoop(Functor&& cb);
+    // the design style in mudo 
     bool isInLoopThread const {
         return threadId_ == CurrentThread::tid();  
     }
@@ -47,7 +46,8 @@ class EventLoop {
     }
     
   private:
-    bool looping_; // 是否正在运行
+    bool looping_;
+    // whether the EventLoop running 
     shared_ptr<Epoll> poller_;  
     int wakeupFd_;  
     bool quit_;

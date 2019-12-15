@@ -12,6 +12,9 @@ int main(int argc, char* argv[]) {
 
     int opt;
     const char *str = "t:l:p";
+    // t means the number of thread 
+    // l means logPath
+    // p means the port 
     while((opt = getopt(argc, argv, str) != -1)) {
         switch(opt) {
             cast 't': {
@@ -34,11 +37,14 @@ int main(int argc, char* argv[]) {
               break;
         }
     }
+    // set the name of LogFile 
     Logger::setLogFileName(logPath);
 
 #ifndef _PTREADS
-    LOG << ")PTHREAD is not defined !";
+// ifndef means if not define 
+    LOG << "PTHREAD is not defined !";
 #endif
+
     EventLoop mainLoop;
     Server myHTTPServer(&maininLoop, threadNum, port);
     myHTTPServer.start();
