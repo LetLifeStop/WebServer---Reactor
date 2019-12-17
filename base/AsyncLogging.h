@@ -7,7 +7,6 @@
 #include "MutexLock.h"
 #include "Thread.h"
 #include "noncopyable.h"
-//  start a log thread ,write the data in the buffer into the LogFile and set two buffer size
 
 class AsynLogging : noncopyable {
     public:

@@ -42,7 +42,6 @@ void AsyncLogging::append(const char* logline, int len) {
     }
 }    
 
-
 void AsynLogging::threadFunc() {
     assert(running_ == true);
     latch_.countDown();

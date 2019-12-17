@@ -14,6 +14,6 @@ void CoundDownLatch::CoundDown() {
     --count__;
     if(count_ == 0) condition_.notifyAll();
     // notify是随机唤醒对象的等待池中的一个线程
-    // notify是唤醒对象等待池的所有线程
+    // notifyAll是唤醒对象等待池的所有线程
 }
 

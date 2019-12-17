@@ -48,7 +48,7 @@ struct ThreadData {
         latch_->countDown();
         latch_ = NULL;
 
-        CurrentThread::t_threadName = name_.empty() ? "thread" : name).c_str();
+        CurrentThread::t_threadName = name_.empty() ? "thread" : name.c_str();
         prctl(PR_SET_NAME, CurrentThread::t_threadName);
         // 把参数CurrentThread::t_threadName作为进程名
         func_();
@@ -71,9 +71,9 @@ Thread::thread(const ThreadFunc& func, const string& n) :
     tid_(0),
     func_(func),
     name_(n),
-    latch_(1){
+    latch_(1) {
       setDefaultName();
-}
+    }
 
 Thread::~Thread() {
     if(started_ && !joined_) pthread_detach(pthread_Id_);

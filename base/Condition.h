@@ -30,12 +30,14 @@ class Condition : noncopyable {
         clock_gettime(CLOCK_REALTIME, &abstime);
         abstime.tv_sec += static_cast<time_t>(seconds);
         // ETIMEOUT 连接超时
-        // pthread_cond_timedwait 首先放开mutex， 如果在abstime中，没有获取到cond信号，会返回ETIMEDOUT 
+        // pthread_cond_timedwait 首先放开mutex， 如果在abstime中，没有获取到cond信号，收回abstime，会返回ETIMEDOUT 
         return ETIMEDOUT == pthread_cond_timedwait(&cond, mutex.get(), &abstime);
     }
 
   private:
     MutexLock &mutex;
     pthread_cond_t cond;  
-}
+};
+
+
 
