@@ -139,3 +139,149 @@ void HttpData::reset() {
     }
 }
 
+void HttpData::seperateTimer() {
+    if(timer.lock()) {
+        shared_ptr<TimerNode> my_timer(time.lock());
+        my_timer>clearreq();
+        timer.reset();
+    }
+}
+
+void HttpData::handleRead() {
+    __uint32_t &evnets = channel_->getEvents();
+    do {
+    bool zero = false;
+    int readnum = readn(fd_, inBuffer_, zero);
+    LOG << "Request:" << inBuffer_;
+    if(ConnectionState_  == H_DISCONNECTING) {
+        inBuffer_.clear();
+        break;
+    }
+
+    if(readnum < 0) {
+        perror("1");
+        error_ = 1;
+        handleError(fd_, 400, "Bad request");
+        // 400 means you request is useless 
+        break;
+    }
+
+    else if(zero) {
+    // get the request but do not receive the data, regard this case as client already closed
+    ConnectionState_ = H_DISCONNECTING;
+    if(read_sum == 0){
+        break;
+        }
+    }
+
+    if(state_ == START_PARSE_URI) {
+        URIState flag = this->parseURI();
+        if(flag == PARSE_URI_AGAIN) {
+            break;
+        }
+        else if(flag == PARSE_URI_ERROR) {
+            perror("2");
+            LOG << "FD=" << fd_ << "," << inBuffer_ << "*****";
+            inBuffer_.clear();
+            error_ = true;
+            handleError(fd_, 400, "Bad request");
+            break;
+        }
+        else { 
+            state_ = START_PARSE_HEADERS;
+        }   
+    }
+
+    if(state_ == STATE_PARSE_HEADERS) {
+        HeaderState flag = this->parseHeaders();
+
+    }
+    }
+    
+    }
+}
+
+
+URIState HttpData::parseURI() {
+   // analyse the URI 
+    string &str = inBuffer_;
+    string cop = str;
+    size_t pos = str.find('\r', nowReadPos_);
+    if(pos < 0) {
+        return PARSE_URI_AGAIN;
+    }
+
+    string request_line = str.substr(0, pos);
+    if(str.size() > pos + 1) {
+        str = str.substr(pos + 1);
+    }
+    else
+        str.clear();
+
+    int posGet = request_line.find('GET');
+    int posPost = request_line.find('POST');
+    int posHead = request_line.find('HEAD');
+    // analyse the type of request 
+    if(posGet >= 0) {
+        pos = posGet;
+        method_ = METHOD_GET;
+    }
+    else if (posPost >= 0) {
+        pos = posPost;
+        method_ = METHOD_POST;
+    }
+    else if(posHead >= 0) {
+        pos = posHead;
+        method_ = METHOD_HEAD;
+    }
+    else 
+        return PARSE_URI_ERROR;
+
+    pos = request_line.find("/", pos);
+    //analyse the filename ? url  
+    if(pos < 0) {
+        fileName_ = "index.html";
+        HTTPVersion_ = HTTP_11;
+        return PARSE_URI_SUCCESS;
+    }
+    else {
+        size_t _pos = request_line.find("/", pos);
+        if(_pos < 0) {
+            return PARSE_URI_ERROR; 
+        }
+        else {
+            if(_pos - pos > 1) {
+                fileName_ = request_line.substr(pos + 1, _pos - pos - 1);
+                size_t __pos = fileName_.find('?');
+                if(__pos == 0) {
+                    fileName_ = fileName.substr(0, __pos);
+                }
+            }
+            else {
+                fileName_ = "index.html";
+            }
+        }
+        pos = _pos;
+    }
+    
+    pos = request_line.find("/", pos);
+    // analyse the version of http
+    if(pos < 0) {
+        return PARSE_URI_ERROR;
+    }
+    else {
+        if(request.line.size() - pos <= 3) {
+            return PARSE_URI_ERROR;
+        }
+        else {
+            string ver = request_line.substr(pos + 1, 3);
+            if(ver == "1.0")
+                HTTPVersion_ = HTTP_10;
+            else if(ver == "1.1")
+                HTTPVersion = HTTP_11;
+            else 
+                return PARSE_URI_ERROR;
+        }
+    }
+    return PARSE_URI_SUCCESS;
+}

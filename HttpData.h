@@ -6,7 +6,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "TImer.h"
+#include "Timer.h"
 
 class EventLoop;
 class TimerNode;
@@ -22,8 +22,13 @@ enum ProcessState{
 
 enum URIState{
     PARSE_URI_AGAIN = 1,
+    PARSE_URI_ERROR,
+    PARSE_URI_SUCCESS
+};
+
+enum HeaderState {
+    PARSE_HEADER_SUCCESS = 1,
     PARSE_HEADER_AGAIN,
-    PARSE_HEADER_ERROR,
     PARSE_HEADER_ERROR
 };
 
