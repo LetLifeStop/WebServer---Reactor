@@ -285,3 +285,71 @@ URIState HttpData::parseURI() {
     }
     return PARSE_URI_SUCCESS;
 }
+
+HeaderState HttpData::parseHeaders() {
+    string &str = inBuffer_;
+    int key_start = -1, key_end = -1, value_start = -1, value_end = -1;
+    int now_read_line_begin = 0;
+    bool notFinish = 1;
+    size_t i = 0;
+    for(; i < str.size() && notFinish; i++) {
+        switch(hState_) {   
+
+        case H_START: {
+          if(str[i] == '\n' || str[i] == '\r') 
+              break;
+          hState_ = H_KEY;
+          key_start = i;
+          now_read_line_begin = i;
+          break;
+          }
+        
+        case H_KEY: {
+        // the head str 
+          if(str[i] == ':') {
+            key_end = i;
+            if(key_end - key_start <= 0)
+                return PARSE_HEADER_ERROR;
+            hstate = H_COLON;   
+          }
+          else if(str[i] == '\n' || str[i] == '\r'){
+            return PARSE_HEADER_ERROR;
+          }
+          break;
+        } 
+
+        case H_COLON: {
+       // the signal :
+          if(str[i] == ':') {
+            hState_ = H_SPACES_AFTER_COLON;
+          }
+          else
+            return PARSE_HREADER_ERROR;
+        }
+
+        case H_SPACE_AFTER_COLON: {
+          hState_ = H_VALUE;
+          value_start = i;
+          break;
+        }
+        
+        case H_VALUE: {
+          if(str[i] == '\r') {
+            hState_ = H_CR;
+            value_end = i;
+            if(value_end - value_start <= 0) 
+                return  PARSE_HEADER_ERROR;
+          }
+            else if(i - value_start > 255) {
+                return PARSE_HEADER_ERROR;
+            }
+            break;
+        }
+
+        case H_CR: {
+          if(str[i] == '\n') {
+            
+          }
+        }
+    }
+}
