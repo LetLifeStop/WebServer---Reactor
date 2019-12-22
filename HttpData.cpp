@@ -194,13 +194,79 @@ void HttpData::handleRead() {
 
     if(state_ == STATE_PARSE_HEADERS) {
         HeaderState flag = this->parseHeaders();
+        if(flag == PARSE_HEADER_AGAIN)
+            break;
+        else if(flag == PARSE_HEADER_ERROR) {
+            perror("3");
+            errno_ = true;
+            handleError(fd_, 400, "Bad Request");
+            break;
+        }
+        if(method == ETHOD_POST) {
+            state_ = STATE_RECV_BODY;
+        } 
+        else {
+            state_ = STATE_ANALYSIS;
+        }
+    }
 
+    if(state_ == STATE_RECV_BODY) {
+        int content_length = -1;
+        if(headers_.find("Content-length") != headers_.end()) {
+            content_length = stoi(headers_["Content-length"]);
+        }
+        else {
+            error_ = true;
+            handleError(fd_, 400, "Bad Request:lack of argument(Content)");
+            break;
+        }
+        if(static_cast<int>(inBuffer_.size()) < content_length)
+            break;
+        state_ = STATE_ANALYSIS;
     }
-    }
+
+    if(state_ == STATE_ANALYSIS) {
+        AnalysisState = this->analysisRequest();
+        if(flag == ANALYSIS_SUCCESS) {
+            state_ = STATE_FINSH;
+            break;
+        }
+        else {
+            errno_ = true;
+        }
+     }
+    }while(false);
     
+    if(!error_) {
+        if(outBuffer_.size() > 0) {
+            // this means still having data after 
+            handleWrite();
+        }
+        if(!errno_ && state_ == STATE_FINISH) {
+            this->reset();
+            if(inBuffer_.size() > 0) {
+                if(ConnectionState_ != H_DISCONNECTING) 
+                    handleRead();
+            }
+        }
+        else if(!error_ &&  ConnectionState_ != H_DISCONNECTING) {
+            events_ |= EPOLLIN;
+        }
     }
 }
 
+void HttpData::handleWrite() {
+    if(!error_ && ConnectionState_ != H_DISCONNECTING) {
+        __uint32_t &events_ = channel_->getEvents()
+            if(writen(fd_, outBuffer_) < 0) {
+                perror("Writen");
+                events_ = 0;
+                error_ = true;
+            }
+        if(outBuffer_.size() > 0)
+            events |= EPOLLOUT; 
+    }
+}
 
 URIState HttpData::parseURI() {
    // analyse the URI 
@@ -348,8 +414,169 @@ HeaderState HttpData::parseHeaders() {
 
         case H_CR: {
           if(str[i] == '\n') {
-            
+            hState_ = H_LF;
+            std::string key(str.begin() + key_start, str.beegin() + key_end);
+            std::string value(str.begin() + value_start. str.begin() + value_end);
+            headers_[key] = value;
+            now_read_line_begin = i;
           }
+          else 
+              return PARSE_HEADER_ERROR;
+        }
+
+        case H_LF: {
+          if(str[i] == '\r') {
+            hState_ = H_END_CR;
+           }
+          else {
+              key_start = i;
+              hState_ = H_KEY;
+              // if the next signal not \r, it means the next is request head  
+          }
+          break;
+        }
+
+        case H_END_CR: {
+          if(str[i] == '\n') {
+            hState_ = H_END_LF;
+           }
+          else {
+            return PARSE_HEADER_ERROR;
+          }
+          break;
+        }
+
+        case H_END_LF: {
+          notFinish = false;
+          key_start = i;
+          now_read_line_begin = i;
+          break;
+         }
         }
     }
+
+    if(hState_ == H_END_LF) {
+      str = str.substr(i);
+      return PRASE_HEADER_SUCCESS;
+    }
+    
+    str = str.substr(now_read_line_begin);
+    return PARSE_HEADER_AGAIN;
 }
+
+
+AnalysisState HttpData::analysisRequest() {
+    if(method_ == METHOD_POST) {
+
+    }
+    else if(method_ ==  METHOD_GET || method_ == METHOD_HEAD) {
+        string header;
+        header += "HTTP/1.1 200 OK\n";
+        if(headers_.find("Connection") != headers_.end() && (headers_["Connection"] == "Keep-Alive" || headers_["Connection"] == "Keep-Alive")) {
+            keppAlive = true;
+             header += string("Connection:Keep-Alive\r\n") + "Keep_Alive:timeout=" + to_string(DEFAULT_KEEP_ALIVE_TIME) +"\r\n";
+        }
+        int dot_pos = fileName_.find('.');
+        string filetype;
+        if(dot_pos < 0) {
+            filetype = MimeType::getMime("default");
+        }
+        else 
+            filetype = MimeType::getMime(fileName_.substr(dot_pos));
+        // test start  
+        if(fileName_ == "hello") {
+            outBuffer_ =  "HTTP/1.1 200 OK\r\nContent-type: text/plain\r\n\r\nHello World";
+            return ANALYSIS_SUCCESS;
+        }
+
+        if(fileName_ == "favicon.ico") {
+            header += "Content-Type:image/png\r\n";
+            header += "Content-Length:" + to_string(sizeof(favicon)) + "\r\n";
+            header += "Server:Let_Life_Stop's Web Server\r\n";
+
+            header += "\r\n";
+            outBuffer_ += header;
+            outBuffer_ += string(favicon, favicon + sizeof(favicon));
+            return ANALYSIS_SUCCESS;
+        }
+        // test end
+
+        // repaly message  
+        struct stat sbuf;
+        if(stat(fileName_.c_str(), &sbuf) < 0) {
+            header.clear();
+            handleError(fd_, 404, "Not Found!");
+            return ANALYSIS_ERROR;
+        }
+
+        header += "Content-Type:" + filetype + "\r\n";
+        header += "Content-Length:" + to_string(sbuf.st_size) + "\r\n";
+        header += "Server:Let_Life_Stop's Web Server\r\n";
+        
+        header += "\r\n";
+        outBuffer_ += header;
+
+        if(method_ == METHOD_HEAD) ;
+            return ANALYSIS_SUCCESS;
+        // the difference between is HEAD only ask the head of the page, but GET ask the all page 
+        int src_fd = open(fileName_.c_str(), O_RDONLY, 0);
+        if(src_fd < 0) {
+            outBuffer_.clear();
+            handleError(fd_, 404, "Not Found!");
+            return ANALYSIS_ERROR;
+        }
+
+        void *mmapRet = mmap(NULL, sbuf.size(), PROT_READ, MAP_PRIVATE, src_fd, 0);
+        close(src_fd);
+        if(mmapRet == (void*)-1) {
+            munmap(mmapRet, sbuf.size());
+            outbuffer_.clear();
+            handleError(fd_, 404, "Not Found");
+            return AMALYSIS_ERROR;
+        }
+
+        char* src_addr = static_cast<char *>(mmapRet);
+        outBuffer_ += string(src_addr, src_addr + sbuf.st_size());
+        munmap(mmapRet, sbuf.st_size);
+        return ANALYSIS_SUCCESS;
+    }
+    return ANALYSIS_ERROR;
+}
+
+void HttpData::handleError(int fd, int err_num, string short_msg) {
+    short_msg = " " + short_msg;
+    char send_buff[4096];
+    string body_buff, header_buff;
+    body_buff += "<html><title>Problem occured!</title>";
+    body_buff += "<body bgcolor=\"ffffff\>";
+    body_buff += to_string(err_num) + short_msg;
+    body_buff += "<hr><em>Let_Life_Stop's Web Server</em>\n</body></html>";
+
+    header_buff += "HTTP/1.1" + to_string(err_num) + short_msg + "\r\n";
+    header_buff += "Content-Type:text/html\r\n";
+    header_buff += "Connection:close\r\n";
+    header_buff += "Content-Length:" + to_string(body_buff.size()) + "\r\n";
+    header_buff += "Server:Let_Life_Stop's web Server\r\n";
+
+    sprintf(send_buff, "%s", header_buff.c_str());
+    writen(fd, send_buff, strlen(send_buff));
+    sprintf(send_buff, "%s", body_buff.c_str());
+    writen(fd, send_buff, strlen(send_buff));
+}
+
+void HttpData::handleClose() {
+    ConnectionState_ = H_DISCONNECTED;
+    shared_ptr<HttpData>guard(shared_from_this());
+    loop_->removeFromPoller(channel_);
+}
+
+void HttpData::newEvent() {
+    channel_->setEvents(DEFAULT_EVENT);
+    loop_->addToPoller(channel_, DEFAULT_EXPIRED_TIME);
+}
+
+
+
+        
+
+
