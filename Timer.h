@@ -4,7 +4,7 @@
 #include <memory>
 #include <queue>
 #include "HttpData.h"
-#include "base/mutexLock.h"
+#include "base/MutexLock.h"
 #include "base/noncopyable.h"
 
 class HttpData;
@@ -28,6 +28,7 @@ class TimerNode{
 };
 
 struct TimerCmp{
+    // change the define of () 
     bool operator()(std::shared_ptr<TimerNode> &a, 
                     std::shared_pre<TimerNode> &b) const{
         return a->getExpTime() > b->getExptime();          
@@ -44,8 +45,7 @@ class TimerManager {
     void handleExpiredEvent();
 
   private:
-    typedef std::shared_ptr(TimerNode) SPTimerNode;
-    std::priority_queue<SPTimerNode, std::deque<SPTimerNode>, Timercmp>
-    TimerNodeQueue;
+    typedef std::shared_ptr<TimerNode> SPTimerNode;
+    std::priority_queue<SPTimerNode, std::deque<SPTimerNode>, Timercmp> TimerNodeQueue;
 };
 

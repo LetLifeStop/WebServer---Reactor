@@ -1,4 +1,4 @@
-#include "AsynLogging.h"
+#include "AsyncLogging.h"
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -24,10 +24,14 @@ AsyncLogging::AsyncLogging(std::string logFileName_, int flushInterval) :
 
 void AsyncLogging::append(const char* logline, int len) {
     MutexLockGuard lock(mutex_);
+    // if currentbuff able to store the logline, then write logline to the buffer   
     if(currentBuffer_->avail() > len){
         currentBuffer_->append(logline, len);
     }
+
     else {
+    // if currentbuff ubable store the logline, put currentbuffer to the buffer, then move the nextbuffer to the currentbuff, then 
+    // put the currentbuffer to the 
         buffers_.push_back(currentBuffer_);
         currentBuffer_.reset();
         

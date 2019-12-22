@@ -8,7 +8,7 @@
 #include "Thread.h"
 #include "noncopyable.h"
 
-class AsynLogging : noncopyable {
+class AsyncLogging : noncopyable {
     public:
       AsyncLogging(const std::string basename, int flushInterval = 2);
       ~AsyncLogging() {

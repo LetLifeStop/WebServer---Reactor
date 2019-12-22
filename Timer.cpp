@@ -4,10 +4,15 @@
 #include <queue>
 
 TimerNode::TimerNode(std::shared_ptr<HttpData> requestData, int timeout) :
-    deleteed_(false),
-    SPHtpData(requestData) {
+    deleted_(false),
+    SPHttpData(requestData) {
         struct timeval now;
+        // struct timeval {
+        // __time_t tv_sec; 秒
+        // __suseconds_t tv_usec; 微秒
+        // }
         gettimeofday(&now, NULL);
+        // calculate the expiretime of current node  
         expiredTime_ = (((now.tv_sec % 10000) * 1000) + (now.tv_usec / 1000)) + timeout;
     }
 
@@ -25,7 +30,20 @@ void TimerNode::update(int timeout) {
     gettimeofday(&now, NULL);
     size_t tmp = (((now.tv_sec % 10000) * 1000) + (now.tv_usec / 1000)) + timeout;
     if(tmp < expiredTime_)
-        retunr 1;
+        return 1;
+    else {
+        // if ndoes exists out of time, then deleted these nodes  
+        this->setDeleted();
+        return false;
+    }
+}
+
+bool TimerNode::isValid() {
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    size_t tmp =((now.tv_sec % 10000) * 10000) + (now.tv_usec / 1000);
+    if(tmp < expiredTime_)
+        return true;
     else {
         this->setDeleted();
         return false;
@@ -46,6 +64,7 @@ void TimerManager::addTimer(std::shared_ptr<HttpData> SPHttpData, int timeout) {
 }
 
 void TimerManager::handleExpiredEvent() {
+    // deal with the useless event 
     while(!TimerNodeQueue.empty()) {
         SPTimerNode ptimer_now = TimerNodeQueue.top();
         if(ptimer_now->isDeleted())
@@ -56,3 +75,5 @@ void TimerManager::handleExpiredEvent() {
             break;
     }
 }
+
+
