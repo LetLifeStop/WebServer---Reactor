@@ -17,6 +17,7 @@ Server::Server(EventLoop* loop, int threadNum, int port) :
         acceptChannel_->setFd(listenFd_);
         handle_for_sigpipe();
     }
+
     if(setSocketNonBlocking(listenFd_) < 0) {
         perror("set socket non block failed");
         abort();
@@ -24,7 +25,7 @@ Server::Server(EventLoop* loop, int threadNum, int port) :
 
 
 void Server::start() {
-    EventLoopThreadPool_->start();
+    eventLoopThreadPool_->start();
     acceptChannel_->setEvents(EPOLLIN | EPOLLET);
     acceptChannel_->setReadHandler(bind(&Server::handNewConn, this));
     acceptChannel_->setReadHandler(bind(&Server::handThisConn, this));

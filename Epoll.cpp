@@ -19,7 +19,7 @@ typedef shared_ptr<channel> SP_Channel;
 
 Epoll::Epoll() : epollFD_(epoll_create1(EPOLL_CLOEXEC)), events(EVENTSUM) {
     assert(epollFD_ > 0);
-    // EPOLL_CLOEXEC �? close-on-exec状态为0的时候，调用exec的时候，fd不会被关�?
+    // EPOLL_CLOEXEC ??? close-on-exec状态为0的时候，调用exec的时候，fd不会被关???
     // 状态非零的时候，文件描述符会被关闭， 防止fd泄露给exec后的进程
 }
 
@@ -34,7 +34,7 @@ void Epoll::epoll_add(SP_Channel request, int timeout) {
     struct epoll_event event;
     event.data.fd = fd;
     event.events = request->getEvents();
-    // 感兴趣的事情和被触发的事�?
+    // 感兴趣的事情和被触发的事???
     request->EqualAndUpdateLastEvents();
 
     fd2chan_[fd] = request;
@@ -50,7 +50,7 @@ void Epoll::epoll_mod(SP_Channel request, int timeout){
     if(timeout > 0)
       add_timer(request, timeout);
     if(!request->EqualAndUpdateLastEvents()) {
-    // 为什么是不相等的时候才进行更新 �?
+    // 为什么是不相等的时候才进行更新 ???
         struct epoll_event event;
         event.data.fd = fd;
         event.events = request->getEvents();
@@ -106,7 +106,7 @@ std::vector<SP_Channel> Epoll::getEventsRequest(int events_num){
     return req_data;
 }
 
-void Epoll::add_timer(SP_Channel request_data, int timeout){
+void Epoll::add_timer(SP_Channel request_data, int timeout) {
     shared_ptr<HttpData> t = request_data->getHolder();
     if(t)
       timerManager_.addTimer(t, timeout);

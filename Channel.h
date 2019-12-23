@@ -12,7 +12,7 @@ class HttpData;
 
 //std::function 可以是新对各种可调用实体的封装，可以处理不同函数对象类型
 
-// 保存fd和需要监听的events，以及各种回调函数
+//保存fd和需要监听的events，以及各种回调函数
 class Channel{
   private:
     // 定义回调函数
@@ -48,8 +48,8 @@ class Channel{
         int getFd();
         void setFd(int fd);
 
-        void setHolder(std::shared_ptr<HttpData> holder) { holder_ = hoder; }
-        std::shared_ptr<HttpData> getHolder(){
+        void setHolder(std::shared_ptr<HttpData> holder) { holder_ = holder; }
+        std::shared_ptr<HttpData> getHolder() {
             // 如果expired为0的话，返回一个指向holder的对象的shared_ptr指针
             std::shared_ptr<HttpData> ret(holder_.lock());
             return ret;
@@ -85,7 +85,7 @@ class Channel{
                 handleWrite();
             }
 
-            hanleConn();
+            handleConn();
         }
 
         void handleRead();

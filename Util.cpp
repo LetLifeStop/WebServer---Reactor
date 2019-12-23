@@ -143,9 +143,9 @@ void handle_for_sigpipe(){
     struct sigaction sa;
     memest(&sa, '\0', sizeof(sa));
     sa.sa_handler = SIG_IGN;
-    // 作用是忽略SIGCHLD信号，可以让内核把僵尸进程转交给init进程去处理
-    // 省去了大量僵尸进程占用系统资源
+    // SIGIGN为忽略信号，在此处的作用是忽略SIGPIPE信号
     sa.sa_flags = 0;
+
     if(sigaction(SIGPIPE, &sa, NULL))
     return ;
 }
