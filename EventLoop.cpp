@@ -14,7 +14,6 @@ int createEventfd() {
     if(evtfd < 0){
         LOG << "Failed in eventfd";
         abort();
-        // ç»ˆæ?¢ç¨‹åºè¿è¡?
     }
     return evtfd;
 }

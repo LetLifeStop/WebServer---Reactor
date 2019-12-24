@@ -48,11 +48,21 @@
 
 * Epoll
 
-   封装了epoll多路复用的基本用法，对文件描述符的增删改查;通过调用epoll_wait收集有事件发生的fd，然后将这一些fd转移到channel中进行处理。
+   封装了epoll多路复用的基本用法，对文件描述符的增删改查;通过调用epoll_wait收集哪些fd上有时事件发生，然后将这一些fd转移到channel中进行处理
+
+* CurrentThread
+
+   t_cachedTid为线程的真实id，t_tidString为将tid通过字符串的形式进行保存，便于输出日志，t_tidStringLength为线程的名称的长度，t_threadName为线程的名称。
+
+   线程的真实Id和pthread_self并不同，pthread_self返回的是当前线程的标识符，类型为结构体。而线程的真实id是通过系统调用生成的，类型为整数，为了减少系统调用的次数，将线程的真实id通过t_cachedTid储存起来
 
 * EventLoop
 
+   事件循环，每次通过loop调用epoll中的poll获取活跃的事件列表，然后通知channel去处理。还实现了对poll所管理的fd的增加，删除，更新
+
 * EventLoopThread
+
+   新建一个线程来实现EventLoop的loop功能
 
 * EventLoopThreadPool
 

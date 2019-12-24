@@ -65,5 +65,3 @@ class EventLoop {
     void handleConn();
 };
 
-
-

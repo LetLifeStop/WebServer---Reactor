@@ -45,7 +45,7 @@ void Epoll::epoll_add(SP_Channel request, int timeout) {
     }
 }
 
-void Epoll::epoll_mod(SP_Channel request, int timeout){
+void Epoll::epoll_mod(SP_Channel request, int timeout) {
     int fd = request->getFd();
     if(timeout > 0)
       add_timer(request, timeout);
@@ -68,7 +68,7 @@ void Epoll::epoll_del(SP_Channel request) {
     event.data.fd = fd;
     event.events = request->getLastEvents();
 
-    if(epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, &event) < 0){
+    if(epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, &event) < 0) {
         perror("Epoll_del error");
     }
     fd2chan_[fd].reset();
@@ -87,7 +87,7 @@ std::vector<SP_Channel>Epoll::poll() {
     }
 }
 
-std::vector<SP_Channel> Epoll::getEventsRequest(int events_num){
+std::vector<SP_Channel> Epoll::getEventsRequest(int events_num) {
     std::vector<SP_Channel> req_data;
     int i;
     for(i = 0; i < events_num; i++){
