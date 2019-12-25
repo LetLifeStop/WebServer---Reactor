@@ -18,7 +18,7 @@ int createEventfd() {
     return evtfd;
 }
 
-EventLoop::EventLoop ():
+EventLoop::EventLoop():
     looping_(false),
     poller_(new Epoll()),
     wakeupFd_(createEventfd()),
@@ -39,6 +39,115 @@ EventLoop::EventLoop ():
     pwakeupChannel_->setConnhandler(bind(&EventLoop::handleConn, this));
     poller_->epoll_add(pwakeupChannel_, 0);
 }
+
+void EventLoop::handleConn() {
+    updatePoller(pwakeupChannel_, 0);
+}
+
+EventLoop::~EventLoop() {
+    close(wakeupFd_);
+    t_loopInthisThread = NULL;
+}
+
+void EventLoop::handleRead() {
+    uint64_t one = 1;
+    ssize_t n = readn(wakeupFd_, &one, sizeof(one));
+    if(n != sieof(one)) {
+        LOG << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
+    }
+}
+
+void EventLoop::runInLoop(Functor&& cb) {
+    if(isInLoopThread()) {
+        cb();
+    }
+    else {
+        queueInLoop(std::move(cb));
+    }
+}
+
+void EventLoop::queueInLoop(Functor&& cb) {
+    
+    {
+    MutexLockGuard lock(mutex_);
+    pendingFunctors_.emplace_back(std::move());
+    }
+
+    if(!isInLoopThread() || callingPendingFunctors_)
+        wakeup();
+}
+
+void EventLoop::loop() {
+    assert(!looping_);
+    assert(!isInLoopThread);
+    looping_ = true;
+    quit_ = false;
+    std::vector<SP_Channel> ret;
+    while(!quit_) {
+        ret.clear();
+        ret = poller_->poll();
+        eventHandling_ = true;
+        for(auto& it: ret) {
+            it->handleEvents();
+        }
+        eventHandling_ = false;
+        doPendingFunctors();
+        poller_->handleExpired();
+    }
+    looping_ = false;
+}
+
+void EventLoop::doPendingFunctors() {
+    std::vector<Functor> functors;
+    callingPendingFunctors_ = true;
+
+    {
+        MutexLockGuard lock(mutex_);
+        functors.swap(pendingFunctors_);
+    }
+
+    for(size_t i = 0; i < functors.size(); i++) {
+        functors[i]();
+    }
+
+    callingPendingFunctors_ = false;
+}
+
+void EventLoop::quit() {
+    quit_ = true;
+    if(!isInLoopThread()) {
+        wakeup();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

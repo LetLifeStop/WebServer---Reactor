@@ -58,7 +58,9 @@
 
 * EventLoop
 
-   事件循环，每次通过loop调用epoll中的poll获取活跃的事件列表，然后通知channel去处理。还实现了对poll所管理的fd的增加，删除，更新
+    事件循环，每次通过loop调用epoll中的poll获取活跃的事件列表，然后通知channel去处理。还实现了对poll所管理的fd的增加，删除，更新
+
+    注意runInloop函数，这个函数借鉴的是mudo库的一个设计思想，可以实现在不用锁的情况下保证线程的安全性。当我们要执行一个函数的时候，判断该函数是否在他属于的IO线程中，如果在的话，执行即可。如果不在的花，执行queueInLoop函数，通过wake唤醒对应的IO线程来领取人物
 
 * EventLoopThread
 
@@ -66,15 +68,15 @@
 
 * EventLoopThreadPool
 
-* Timer
-
-* Util
+   一次性开启numthread_个EventLoopThread线程，通过线程池的形式管理EventLoopThread 
 
 * Server
 
+   调用accept等待客户端发送请求建立连接，然后通过handeNewconn函数，进行channel的绑定，寻找一个EventLoop来认领这个channel,loop的绑定
+
 * Main
 
-
+   
 
 ## Log 日志记录
 

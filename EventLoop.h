@@ -29,15 +29,15 @@ class EventLoop {
         assert(isInLoopThread());
     }
     // 禁止在一个套接口上进行读写操作
-    void shutdown(shared_ptr<Channel> channel){   
+    void shutdown(shared_ptr<Channel> channel) {   
         shutDownWR(channel->getFd());
     }
     // 从就绪事件中取走对应channel
-    void removeFromPoller(shared_ptr<Channel> channel){
+    void removeFromPoller(shared_ptr<Channel> channel) {
         poller_->epoll_del(channel);
     }
     // 更新就绪事件
-    void updatePoller(shared_ptr<Channel> channel, int timeout = 0){
+    void updatePoller(shared_ptr<Channel> channel, int timeout = 0) {
         poller_->epoll_mod(channel, timeout);
     }
     // 向就绪事件中添加channel
@@ -64,4 +64,3 @@ class EventLoop {
     void doPendingFunctors();
     void handleConn();
 };
-

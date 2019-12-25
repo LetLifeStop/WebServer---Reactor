@@ -16,7 +16,7 @@ class Server {
     private:
       EventLoop *loop_;
       int threadNum_;
-      std::unique_ptr<EventLoopThread> eventLoopThreadPool_;
+      std::unique_ptr<EventLoopThreadPool> eventLoopThreadPool_;
       bool started_;
       std::shared_ptr<Channel> acceptChannel_;
       int port_;
