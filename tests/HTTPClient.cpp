@@ -19,6 +19,17 @@ using namespace std;
 # define FDSIZE 1024
 # define EPOLLEVENTS 20
 
+int setSocketNonBlocking1(int fd) {
+    int flag = fcntl(fd, F_GETFL, 0);
+    if(falg == -1)
+        return -1;
+    
+    flag |= O_NONBLOCK;
+    if(fcntl(fd, F_SETFD, flag) == -1)
+        return -1;
+    return 0;
+
+}
 int main(int argc, char* argv[]) {
     int sockfd;
     struct sockaddr_in servddr;
@@ -30,9 +41,25 @@ int main(int argc, char* argv[]) {
     char buff[4096];
     buff[0] = '\0';
 
-    const char *p = " ";
+    const char *p = "GET";
+    if(connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == 0) {
+        setSocketNonBlocking1(sockfd);
+        cout << "1:" << endl;
+        ssize_t n = write(sockfd, p, strlen(p));
+        cout << "strlen(p) = " << strlen(p) << endl;
+        sleep(1);
 
-    
+        n = read(sockfd, buff, 4096);
+        cout << "n = " << n << endl;
+        printf("%s", buff);
+        close(sockfd);
+    }
+    else {
+        perror("err1");
+    }
+
+    p = 
+        
     return 0;
 }
 
