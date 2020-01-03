@@ -18,7 +18,8 @@ EventLoopThread::~EventLoopThread() {
 
 EventLoop* EventLoopThread::startLoop() {
     assert(!thread_.started());
-    thread_.start(){
+    thread_.start();
+    {
       MutexLockGuard lock(mutex_);
       while(loop_ == NULL) cond_.wait();
       // 防止虚假唤醒
@@ -26,12 +27,12 @@ EventLoop* EventLoopThread::startLoop() {
     return loop_;
 }
 
-void EventLoopThread::threadFunuc() {
+void EventLoopThread::threadFunc() {
     EventLoop loop;
     
     MutexLockGuard lock(mutex_);
     loop_ = &loop;
-    cond.notify();
+    cond_.notify();
     // notify 的作用是唤醒线程
     loop.loop();
     loop_ = NULL;

@@ -34,4 +34,4 @@ class Logger {
     static std::string logFileName_;
 };
 // __FILE__ 返回所在的文件名, __LINE__ 返回所在行数， __func__ 返回所在的函数名
-# define LOG logger(__FILE__, __LINE__).stream()
+# define LOG Logger(__FILE__, __LINE__).stream()

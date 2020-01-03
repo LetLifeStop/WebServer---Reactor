@@ -28,14 +28,7 @@ TimerNode::TimerNode(TimerNode &tn) :
 void TimerNode::update(int timeout) {
     struct timeval now;
     gettimeofday(&now, NULL);
-    size_t tmp = (((now.tv_sec % 10000) * 1000) + (now.tv_usec / 1000)) + timeout;
-    if(tmp < expiredTime_)
-        return 1;
-    else {
-        // if ndoes exists out of time, then deleted these nodes  
-        this->setDeleted();
-        return false;
-    }
+    expiredTime_ = (((now.tv_sec % 10000) * 1000) + (now.tv_usec / 1000)) + timeout;
 }
 
 bool TimerNode::isValid() {
@@ -68,7 +61,7 @@ void TimerManager::handleExpiredEvent() {
     while(!TimerNodeQueue.empty()) {
         SPTimerNode ptimer_now = TimerNodeQueue.top();
         if(ptimer_now->isDeleted())
-            timerNodeQueue.pop();
+            TimerNodeQueue.pop();
         else if(ptimer_now->isValid() == false)
             TimerNodeQueue.pop();
         else 

@@ -17,7 +17,7 @@ enum ProcessState{
     STATE_PARSE_HEADERS,
     STATE_RECV_BODY,
     STATE_ANALYSIS,
-    STATE_FINSH
+    STATE_FINISH
 };
 
 enum URIState{
@@ -41,7 +41,7 @@ enum ParseState{
     H_START = 0,
     H_KEY,
     H_COLON,
-    H_SPACES_AFTER_COLON,
+    H_SPACE_AFTER_COLON,
     H_VALUE,
     H_CR,
     H_LF,
@@ -66,12 +66,12 @@ enum HttpVersion{
     HTTP_11
 };
 
-class MimeType{
-  privater:
+class MimeType {
+  private:
     static void init();
     static std::unordered_map<std::string, std::string> mime;
     MimeType();
-    MineType(const MimeType &m);
+    MimeType(const MimeType &m);
 
   public:
     static std::string getMime(const std::string &suffix);
@@ -93,7 +93,7 @@ class HttpData : public std::enable_shared_from_this<HttpData> {
           timer_ = mtimer;
       }
       std::shared_ptr<Channel>getChannel(){ return channel_; }
-      EventLop *getLoop() { return loop_; }
+      EventLoop *getLoop() { return loop_; }
       void handleClose();
       void newEvent();
 
@@ -104,11 +104,12 @@ class HttpData : public std::enable_shared_from_this<HttpData> {
     std::string inBuffer_;
     std::string outBuffer_;
     bool error_;
-    ConnectionState connectionState_;
+    ConnectionState ConnectionState_;
 
     HttpMethod method_;
     HttpVersion HTTPVersion_;
     std::string fileName_;
+    std::string path_;
     int nowReadPos_;
     ProcessState state_;
     ParseState hState_;
@@ -118,6 +119,7 @@ class HttpData : public std::enable_shared_from_this<HttpData> {
 
     void handleRead();
     void handleWrite();
+    void handleConn();
     void handleError(int fd, int err_num, std::string short_msg);
     URIState parseURI();
     HeaderState parseHeaders();

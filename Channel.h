@@ -21,10 +21,10 @@ class Channel{
     EventLoop *loop_;
     // 文件描述符
     int fd_;
-    _uint32_t events_;
+    uint32_t events_;
     // poll/epoll 返回的事件
-    _uint32_t revents_;
-    _uint32_t   lastEvents_;
+    uint32_t revents_;
+    uint32_t lastEvents_;
 
     std::weak_ptr<HttpData> holder_;
 
@@ -40,8 +40,8 @@ class Channel{
       CallBack errorHandler_;
       // 关闭函数
       CallBack connHandler_;
-
-      public:
+   
+    public:
         Channel(EventLoop *loop);
         Channel(EventLoop *Loop, int fd);
         ~Channel();
@@ -59,8 +59,12 @@ class Channel{
             readHandler_ = readHandler;
         }
 
-        void setErrorHandler(CallBack &&writeHandler){
+        void setWriteHandler(CallBack &&writeHandler){
             writeHandler_ = writeHandler;
+        }
+    
+        void setErrorHandler(CallBack &&errorHandler) {
+            errorHandler_ = errorHandler;
         }
 
         void setConnHandler(CallBack &&connHandler){
@@ -93,25 +97,27 @@ class Channel{
         void handleConn();
         void handleError(int fd, int err_num, std::string short_msg);
 
-        void setRevents(_uint32_t ev){
+        void setRevents(uint32_t ev){
             revents_ = ev;
         }
 
-        void setEvents(_uint32_t ev){
+        void setEvents(uint32_t ev){
             events_ = ev;
         }
+    
+        uint32_t &getEvents() {
+            return events_;
+        }
 
-        bool EqualAndUpdataLastEvents(){
+        bool EqualAndUpdateLastEvents(){
             bool ret = (lastEvents_ == events_);
             lastEvents_ = events_;
             return ret;
         }
-
-        _uint32_t getLastEvents(){
+        
+        uint32_t getLastEvents(){
             return lastEvents_;
         }
-            return ;
-        };
-}
+};
 
 typedef std::shared_ptr<Channel> SP_Channel;

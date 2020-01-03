@@ -1,7 +1,7 @@
 #pragma once 
 #include <memory>
 #include <vector>
-#include "EventLoopThreadPool.h"
+#include "EventLoopThread.h"
 #include "base/Logging.h"
 #include "base/noncopyable.h"
 
@@ -9,7 +9,9 @@ class EventLoopThreadPool : noncopyable {
 
     public:
       EventLoopThreadPool(EventLoop* baseLoop, int numThreads);
+     
       ~EventLoopThreadPool() { LOG << "~EventLoopThreadPool()"; }
+      
       void start();
 
       EventLoop* getNextLoop();
@@ -21,4 +23,5 @@ class EventLoopThreadPool : noncopyable {
       int next_;
       std::vector<std::shared_ptr<EventLoopThread> > threads_;
       std::vector<EventLoop*> loops_;  
-}
+};
+

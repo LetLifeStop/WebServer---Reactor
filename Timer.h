@@ -18,7 +18,7 @@ class TimerNode{
     bool isValid();
     void clearReq();
     void setDeleted(){ deleted_ = true; }
-    void isDeleted() const { return deleted_; }
+    bool isDeleted() const { return deleted_; }
     size_t getExpTime() const { return expiredTime_; }
 
   private:
@@ -30,18 +30,16 @@ class TimerNode{
 struct TimerCmp{
     // change the define of () 
     bool operator()(std::shared_ptr<TimerNode> &a, 
-                    std::shared_pre<TimerNode> &b) const{
-        return a->getExpTime() > b->getExptime();          
+                    std::shared_ptr<TimerNode> &b) const{
+        return a->getExpTime() > b->getExpTime();          
                     }
-
-    )
 };
 
 class TimerManager {
   public:
     TimerManager();
     ~TimerManager();
-    void addTimer(std::shared_ptr<HttpdData> SPHttpData, int timeout);
+    void addTimer(std::shared_ptr<HttpData> SPHttpData, int timeout);
     void handleExpiredEvent();
 
   private:

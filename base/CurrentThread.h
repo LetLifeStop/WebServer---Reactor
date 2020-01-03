@@ -27,10 +27,6 @@ namespace CurrentThread {
   }
 
   inline const char* name() {
-      return t_tidStringLength;
-  }
-
-  inline const char* name() {
       return t_threadName;
   }
 }

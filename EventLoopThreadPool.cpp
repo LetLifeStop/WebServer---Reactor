@@ -1,7 +1,7 @@
  #include "EventLoopThreadPool.h"
 
 EventLoopThreadPool::EventLoopThreadPool(EventLoop *baseLoop, int numThread):
-    : baseLoop_(baseLoop), started_(false), numThreads_(numThreads), next_(0) {
+        baseLoop_(baseLoop), started_(false), numThreads_(numThread), next_(0) {
         if(numThreads_ <= 0){
             LOG << "numThreads_ <= 0";
             abort();
@@ -16,7 +16,7 @@ void EventLoopThreadPool::start() {
     for(i = 0; i < numThreads_; i++){
         std::shared_ptr<EventLoopThread> t(new EventLoopThread());
         threads_.push_back(t);
-        loops.push_back(t->startLoop());
+        loops_.push_back(t->startLoop());
     }
 }
 

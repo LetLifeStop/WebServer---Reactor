@@ -8,7 +8,7 @@
 #include "CountDownLatch.h"
 #include "noncopyable.h"
 
-class Thread::noncopyable {
+class Thread : noncopyable {
     public:
       typedef std::function<void()> ThreadFunc;
       explicit Thread(const ThreadFunc&, const std::string& name = std::string());
@@ -25,7 +25,7 @@ class Thread::noncopyable {
       bool joined_;
       pthread_t pthreadId_;
       pid_t tid_;
-      threadFunc func_;
+      ThreadFunc func_;
       std::string name_;
       CountDownLatch latch_;
 };

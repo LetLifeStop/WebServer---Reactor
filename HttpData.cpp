@@ -6,12 +6,12 @@
 #include "Channel.h"
 #include "EventLoop.h"
 #include "Util.h"
-#include "timer.h"
+#include "Timer.h"
 
 using namespace std;
 
 pthread_once_t MimeType::once_control = PTHREAD_ONCE_INIT;
-std::unordered_map<std::string, std::string> MimeType::mine;
+std::unordered_map<std::string, std::string> MimeType::mime;
 
 const __uint32_t DEFAULT_EVENT = EPOLLIN | EPOLLET | EPOLLONESHOT;
 const int DEFAULT_EXPIRED_TIME = 2000;
@@ -113,7 +113,7 @@ HttpData::HttpData(EventLoop *loop, int connfd) :
     channel_(new Channel(loop, connfd)),
     fd_(connfd),
     error_(false),
-    connectionState_(H_CONNECTED),
+    ConnectionState_(H_CONNECTED),
     method_(METHOD_GET),
     HTTPVersion_(HTTP_11),
     nowReadPos_(0),
@@ -133,32 +133,32 @@ void HttpData::reset() {
     hState_ = H_START;
     headers_.clear();
     if(timer_.lock()) {
-        shared_ptr<TimerNode> my_timer(timer.lock());
+        shared_ptr<TimerNode> my_timer(timer_.lock());
         my_timer->clearReq();
-        timer.reset();
+        timer_.reset();
     }
 }
 
 void HttpData::seperateTimer() {
-    if(timer.lock()) {
-        shared_ptr<TimerNode> my_timer(time.lock());
-        my_timer>clearreq();
-        timer.reset();
+    if(timer_.lock()) {
+        shared_ptr<TimerNode> my_timer(timer_.lock());
+        my_timer->clearReq();
+        timer_.reset();
     }
 }
 
 void HttpData::handleRead() {
-    __uint32_t &evnets = channel_->getEvents();
+    __uint32_t &events_ = channel_->getEvents();
     do {
     bool zero = false;
-    int readnum = readn(fd_, inBuffer_, zero);
+    int read_sum = readn(fd_, inBuffer_, zero);
     LOG << "Request:" << inBuffer_;
     if(ConnectionState_  == H_DISCONNECTING) {
         inBuffer_.clear();
         break;
     }
 
-    if(readnum < 0) {
+    if(read_sum < 0) {
         perror("1");
         error_ = 1;
         handleError(fd_, 400, "Bad request");
@@ -174,7 +174,7 @@ void HttpData::handleRead() {
         }
     }
 
-    if(state_ == START_PARSE_URI) {
+    if(state_ == STATE_PARSE_URI) { 
         URIState flag = this->parseURI();
         if(flag == PARSE_URI_AGAIN) {
             break;
@@ -188,7 +188,7 @@ void HttpData::handleRead() {
             break;
         }
         else { 
-            state_ = START_PARSE_HEADERS;
+            state_ = STATE_PARSE_HEADERS;
         }   
     }
 
@@ -198,11 +198,11 @@ void HttpData::handleRead() {
             break;
         else if(flag == PARSE_HEADER_ERROR) {
             perror("3");
-            errno_ = true;
+            error_ = true;
             handleError(fd_, 400, "Bad Request");
             break;
         }
-        if(method == ETHOD_POST) {
+        if(method_ == METHOD_POST) {
             state_ = STATE_RECV_BODY;
         } 
         else {
@@ -226,13 +226,13 @@ void HttpData::handleRead() {
     }
 
     if(state_ == STATE_ANALYSIS) {
-        AnalysisState = this->analysisRequest();
+        AnalysisState flag = this->analysisRequest();
         if(flag == ANALYSIS_SUCCESS) {
-            state_ = STATE_FINSH;
+            state_ = STATE_FINISH;
             break;
         }
         else {
-            errno_ = true;
+            error_ = true;
         }
      }
     }while(false);
@@ -242,7 +242,7 @@ void HttpData::handleRead() {
             // this means still having data after 
             handleWrite();
         }
-        if(!errno_ && state_ == STATE_FINISH) {
+        if(!error_ && state_ == STATE_FINISH) {
             this->reset();
             if(inBuffer_.size() > 0) {
                 if(ConnectionState_ != H_DISCONNECTING) 
@@ -257,14 +257,14 @@ void HttpData::handleRead() {
 
 void HttpData::handleWrite() {
     if(!error_ && ConnectionState_ != H_DISCONNECTING) {
-        __uint32_t &events_ = channel_->getEvents()
+        uint32_t &events_ = channel_->getEvents();
             if(writen(fd_, outBuffer_) < 0) {
                 perror("Writen");
                 events_ = 0;
                 error_ = true;
             }
         if(outBuffer_.size() > 0)
-            events |= EPOLLOUT; 
+            events_ |= EPOLLOUT; 
     }
 }
 
@@ -284,9 +284,9 @@ URIState HttpData::parseURI() {
     else
         str.clear();
 
-    int posGet = request_line.find('GET');
-    int posPost = request_line.find('POST');
-    int posHead = request_line.find('HEAD');
+    int posGet = request_line.find("GET");
+    int posPost = request_line.find("POST");
+    int posHead = request_line.find("HEAD");
     // analyse the type of request 
     if(posGet >= 0) {
         pos = posGet;
@@ -320,7 +320,7 @@ URIState HttpData::parseURI() {
                 fileName_ = request_line.substr(pos + 1, _pos - pos - 1);
                 size_t __pos = fileName_.find('?');
                 if(__pos == 0) {
-                    fileName_ = fileName.substr(0, __pos);
+                    fileName_ = fileName_.substr(0, __pos);
                 }
             }
             else {
@@ -336,7 +336,7 @@ URIState HttpData::parseURI() {
         return PARSE_URI_ERROR;
     }
     else {
-        if(request.line.size() - pos <= 3) {
+        if(request_line.size() - pos <= 3) {
             return PARSE_URI_ERROR;
         }
         else {
@@ -344,7 +344,7 @@ URIState HttpData::parseURI() {
             if(ver == "1.0")
                 HTTPVersion_ = HTTP_10;
             else if(ver == "1.1")
-                HTTPVersion = HTTP_11;
+                HTTPVersion_ = HTTP_11;
             else 
                 return PARSE_URI_ERROR;
         }
@@ -376,7 +376,7 @@ HeaderState HttpData::parseHeaders() {
             key_end = i;
             if(key_end - key_start <= 0)
                 return PARSE_HEADER_ERROR;
-            hstate = H_COLON;   
+            hState_ = H_COLON;   
           }
           else if(str[i] == '\n' || str[i] == '\r'){
             return PARSE_HEADER_ERROR;
@@ -387,10 +387,10 @@ HeaderState HttpData::parseHeaders() {
         case H_COLON: {
        // the signal :
           if(str[i] == ':') {
-            hState_ = H_SPACES_AFTER_COLON;
+            hState_ = H_SPACE_AFTER_COLON;
           }
           else
-            return PARSE_HREADER_ERROR;
+            return PARSE_HEADER_ERROR;
         }
 
         case H_SPACE_AFTER_COLON: {
@@ -415,8 +415,8 @@ HeaderState HttpData::parseHeaders() {
         case H_CR: {
           if(str[i] == '\n') {
             hState_ = H_LF;
-            std::string key(str.begin() + key_start, str.beegin() + key_end);
-            std::string value(str.begin() + value_start. str.begin() + value_end);
+            std::string key(str.begin() + key_start, str.begin() + key_end);
+            std::string value(str.begin() + value_start, str.begin() + value_end);
             headers_[key] = value;
             now_read_line_begin = i;
           }
@@ -457,7 +457,7 @@ HeaderState HttpData::parseHeaders() {
 
     if(hState_ == H_END_LF) {
       str = str.substr(i);
-      return PRASE_HEADER_SUCCESS;
+      return PARSE_HEADER_SUCCESS;
     }
     
     str = str.substr(now_read_line_begin);
@@ -473,7 +473,7 @@ AnalysisState HttpData::analysisRequest() {
         string header;
         header += "HTTP/1.1 200 OK\n";
         if(headers_.find("Connection") != headers_.end() && (headers_["Connection"] == "Keep-Alive" || headers_["Connection"] == "Keep-Alive")) {
-            keppAlive = true;
+            keepAlive_ = true;
              header += string("Connection:Keep-Alive\r\n") + "Keep_Alive:timeout=" + to_string(DEFAULT_KEEP_ALIVE_TIME) +"\r\n";
         }
         int dot_pos = fileName_.find('.');
@@ -516,7 +516,7 @@ AnalysisState HttpData::analysisRequest() {
         header += "\r\n";
         outBuffer_ += header;
 
-        if(method_ == METHOD_HEAD) ;
+        if(method_ == METHOD_HEAD)
             return ANALYSIS_SUCCESS;
         // the difference between is HEAD only ask the head of the page, but GET ask the all page 
         int src_fd = open(fileName_.c_str(), O_RDONLY, 0);
@@ -526,13 +526,13 @@ AnalysisState HttpData::analysisRequest() {
             return ANALYSIS_ERROR;
         }
 
-        void *mmapRet = mmap(NULL, sbuf.size(), PROT_READ, MAP_PRIVATE, src_fd, 0);
+        void *mmapRet = mmap(NULL, sbuf.st_size, PROT_READ, MAP_PRIVATE, src_fd, 0);
         close(src_fd);
-        if(mmapRet == (void*)-1) {
-            munmap(mmapRet, sbuf.size());
-            outbuffer_.clear();
+        if(mmapRet == (void*) - 1) {
+            munmap(mmapRet, sbuf.st_size());
+            outBuffer_.clear();
             handleError(fd_, 404, "Not Found");
-            return AMALYSIS_ERROR;
+            return ANALYSIS_ERROR;
         }
 
         char* src_addr = static_cast<char *>(mmapRet);

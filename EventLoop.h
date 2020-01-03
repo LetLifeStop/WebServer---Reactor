@@ -1,7 +1,9 @@
 // Event为事件循环，每次从poller中拿取活跃的事件，然后分发到channel中进行分发处理
+#pragma once
 #include <functional>
 #include <memory>
 #include <vector>
+#include "assert.h"
 #include "Channel.h"
 #include "Epoll.h"
 #include "Util.h"
@@ -21,7 +23,7 @@ class EventLoop {
     void runInLoop(Functor&& cb);
     void queueInLoop(Functor&& cb);
     // the design style in mudo 
-    bool isInLoopThread const {
+    bool isInLoopThread() const {
         return threadId_ == CurrentThread::tid();  
     }
     // 如果条件返回错误，终止程序的执行
@@ -41,7 +43,7 @@ class EventLoop {
         poller_->epoll_mod(channel, timeout);
     }
     // 向就绪事件中添加channel
-    void addToPoller(shared_ptr<Channel> channel, int timeout = 0){
+    void addToPoller(shared_ptr<Channel> channel, int timeout = 0) {
         poller_->epoll_add(channel, timeout);
     }
     
