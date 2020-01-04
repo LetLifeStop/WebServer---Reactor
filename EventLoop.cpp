@@ -23,20 +23,19 @@ EventLoop::EventLoop():
     poller_(new Epoll()),
     wakeupFd_(createEventfd()),
     quit_(false),
-    eventhandling_(false),
+    eventHandling_(false),
     callingPendingFunctors_(false),
     threadId_(CurrentThread::tid()),
     pwakeupChannel_(new Channel(this, wakeupFd_)) {
       if(t_loopInthisThread) {
-        LOG << "Another EventLoop" << t_loopInthisThread << "exists "; 
+      //  LOG << "Another EventLoop" << t_loopInthisThread << "exists "; 
       }
       else 
         t_loopInthisThread = this;
-    }
 
     pwakeupChannel_->setEvents(EPOLLIN | EPOLLET);
     pwakeupChannel_->setReadHandler(bind(&EventLoop::handleRead, this));
-    pwakeupChannel_->setConnhandler(bind(&EventLoop::handleConn, this));
+    pwakeupChannel_->setConnHandler(bind(&EventLoop::handleConn, this));
     poller_->epoll_add(pwakeupChannel_, 0);
 }
 
@@ -49,10 +48,17 @@ EventLoop::~EventLoop() {
     t_loopInthisThread = NULL;
 }
 
+void EventLoop::wakeup() {
+    uint64_t one = 1;
+    ssize_t n = writen(wakeupFd_, (char*)(&one), sizeof(one));
+    if(n != sizeof(one)) {
+        LOG << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
+    }
+}
 void EventLoop::handleRead() {
     uint64_t one = 1;
     ssize_t n = readn(wakeupFd_, &one, sizeof(one));
-    if(n != sieof(one)) {
+    if(n != sizeof(one)) {
         LOG << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
     }
 }
@@ -70,7 +76,7 @@ void EventLoop::queueInLoop(Functor&& cb) {
     
     {
     MutexLockGuard lock(mutex_);
-    pendingFunctors_.emplace_back(std::move());
+    pendingFunctors_.emplace_back(std::move(cb));
     }
 
     if(!isInLoopThread() || callingPendingFunctors_)
@@ -79,7 +85,7 @@ void EventLoop::queueInLoop(Functor&& cb) {
 
 void EventLoop::loop() {
     assert(!looping_);
-    assert(!isInLoopThread);
+    assert(!isInLoopThread());
     looping_ = true;
     quit_ = false;
     std::vector<SP_Channel> ret;

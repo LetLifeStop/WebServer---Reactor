@@ -1,5 +1,5 @@
 #include <iostream>
-#include "thread.h"
+#include "Thread.h"
 #include <assert.h>
 #include <errno.h>
 #include <linux/unistd.h>
@@ -45,10 +45,10 @@ struct ThreadData {
     void runInThread() {
         *tid_ = CurrentThread::tid();
         tid_ = NULL;
-        latch_->countDown();
+        latch_->CountDown();
         latch_ = NULL;
 
-        CurrentThread::t_threadName = name_.empty() ? "thread" : name.c_str();
+        CurrentThread::t_threadName = name_.empty() ? "thread" : name_.c_str();
         prctl(PR_SET_NAME, CurrentThread::t_threadName);
         // 把参数CurrentThread::t_threadName作为进程名
         func_();
@@ -64,7 +64,7 @@ void* startThread(void* obj) {
     return NULL;
 }
 
-Thread::thread(const ThreadFunc& func, const string& n) :
+Thread::Thread(const ThreadFunc& func, const string& n) :
     started_(false),
     joined_(false),
     pthreadId_(0),
@@ -76,7 +76,7 @@ Thread::thread(const ThreadFunc& func, const string& n) :
     }
 
 Thread::~Thread() {
-    if(started_ && !joined_) pthread_detach(pthread_Id_);
+    if(started_ && !joined_) pthread_detach(pthreadId_);
 }
 
 void Thread::setDefaultName() {
@@ -90,7 +90,7 @@ void Thread::setDefaultName() {
 void Thread::start() {
     assert(!started_);
     started_ = 1;
-    ThreadData* data = new ThreadData(func_, name, &tid_, &latch_);
+    ThreadData* data = new ThreadData(func_, name_, &tid_, &latch_); 
     if(pthread_create(&pthreadId_, NULL, &startThread, data)) {
         started_ = false;
         delete data;
@@ -105,7 +105,7 @@ int Thread::join() {
     assert(started_);
     assert(!joined_);
     joined_ = true;
-    return pthread_join(pthread, NULL);
+    return pthread_join(pthreadId_, NULL);
     // 线程回收
 }
 

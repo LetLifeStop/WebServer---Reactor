@@ -14,10 +14,10 @@ class Logger {
     ~Logger();
     LogStream &stream() { return impl_.stream_; }
     static void setLogFileName(std::string fileName) {
-      logFileName_ = fileName;
+       LogFileName_ = fileName;
     }
     static std::string getLogFileName() {
-      return logFileName_;
+        return LogFileName_;
     }
 
   private:
@@ -31,7 +31,7 @@ class Logger {
       std::string basename_;
     };
     Impl impl_;
-    static std::string logFileName_;
+    static std::string LogFileName_;
 };
 // __FILE__ 返回所在的文件名, __LINE__ 返回所在行数， __func__ 返回所在的函数名
 # define LOG Logger(__FILE__, __LINE__).stream()

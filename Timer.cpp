@@ -50,6 +50,8 @@ void TimerNode::clearReq() {
 
 TimerManager::TimerManager() {}
 
+TimerManager::~TimerManager() {}
+
 void TimerManager::addTimer(std::shared_ptr<HttpData> SPHttpData, int timeout) {
     SPTimerNode new_node(new TimerNode(SPHttpData, timeout));
     TimerNodeQueue.push(new_node);

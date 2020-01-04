@@ -17,21 +17,21 @@ void type_test() {
     LOG << string("string test");
 }
 
-void thread_test() {
-
-    for(int i = 0; i < 1000; i++) {
-        LOG << i;
-    
-    }
-}
+//void thread_test() {
+//
+//    for(int i = 0; i < 1000; i++) {
+//        LOG << i;
+//    
+//    }
+//}
 
 int main() {
 
     type_test();
     sleep(3);
 
-    thread_test();
-    sleep(3);
+//    thread_test();
+//    sleep(3);
 
     return 0;
 }

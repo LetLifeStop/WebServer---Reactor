@@ -19,11 +19,11 @@ typedef shared_ptr<Channel> SP_Channel;
 
 Epoll::Epoll() : epollFd_(epoll_create1(EPOLL_CLOEXEC)), events_(EVENTSUM) {
     assert(epollFd_ > 0);
-    // EPOLL_CLOEXEC ??? close-on-exec状态为0的时候，调用exec的时候，fd不会被关???
+    // EPOLL_CLOEXEC  close-on-exec状态为0的时候，调用exec的时候，fd不会被关???
     // 状态非零的时候，文件描述符会被关闭， 防止fd泄露给exec后的进程
 }
 
-Epoll::~Epoll() {}
+Epoll::~Epoll(){}
 
 void Epoll::epoll_add(SP_Channel request, int timeout) {
     int fd = request->getFd();
@@ -86,6 +86,8 @@ std::vector<SP_Channel>Epoll::poll() {
         return req_data;
     }
 }
+
+void Epoll::handleExpired() { timerManager_.handleExpiredEvent(); }
 
 std::vector<SP_Channel> Epoll::getEventsRequest(int events_num) {
     std::vector<SP_Channel> req_data;

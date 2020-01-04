@@ -9,16 +9,16 @@ AsyncLogging::AsyncLogging(std::string logFileName_, int flushInterval) :
     flushInterval_(flushInterval),
     running_(false),
     basename_(logFileName_),
-    thread_(std::bind(&AsynLogging::threadFunc, this), "Logging"),
+    thread_(std::bind(&AsyncLogging::threadFunc, this), "Logging"),
     mutex_(),
     cond_(mutex_),
     currentBuffer_(new Buffer),
     nextBuffer_(new Buffer),
     buffers_(),
     latch_(1) {
-        assert(logFileName_, size() > 1);
+        assert(logFileName_.size() > 1);
         currentBuffer_->bzero();
-        nextBuffer->bzero();
+        nextBuffer_->bzero();
         buffers_.reserve(16);
     }
 
@@ -46,9 +46,9 @@ void AsyncLogging::append(const char* logline, int len) {
     }
 }    
 
-void AsynLogging::threadFunc() {
+void AsyncLogging::threadFunc() {
     assert(running_ == true);
-    latch_.countDown();
+    latch_.CountDown();
     LogFile output(basename_);
     BufferPtr newBuffer1(new Buffer);
     BufferPtr newBuffer2(new Buffer);
@@ -64,7 +64,7 @@ void AsynLogging::threadFunc() {
     {
         MutexLockGuard lock(mutex_);
         if(buffers_.empty()){
-            cond.waitForSeconds(flushInterval_);
+            cond_.waitForSeconds(flushInterval_);
         }
         buffers_.push_back(currentBuffer_);
         currentBuffer_.reset();
@@ -83,7 +83,7 @@ void AsynLogging::threadFunc() {
     }
 
     for(size_t i = 0; i < buffersToWrite.size(); i++){
-        output.append(buffersTowrite[i]->data(), buffersToWrite[i]->length());
+        output.append(buffersToWrite[i]->data(), buffersToWrite[i]->length());
     }
 
     if(buffersToWrite.size() > 2){

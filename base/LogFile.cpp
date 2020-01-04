@@ -11,12 +11,12 @@ LogFile::LogFile(const string& basename, int flushEveryN) :
     flushEveryN_(flushEveryN),
     count_(0),
     mutex_(new MutexLock) {
-        flie_.reset(new AppendFile(basename));
+        file_.reset(new AppendFile(basename));
     }
 
 LogFile::~LogFile() {}
 
-void logFile::append(const char* logline, int len) { 
+void LogFile::append(const char* logline, int len) { 
     MutexLockGuard lock(*mutex_);
     append_unlocked(logline, len);
 }
@@ -26,14 +26,13 @@ void LogFile::flush() {
     file_->flush();
 }
 
-void LogFile::append_unlocked(const char* logine, int len) {
+void LogFile::append_unlocked(const char* logline, int len) {
     file_->append(logline, len);
     ++count_;
     // 每当append的次数大于等于 flushEveryN_的时候，就进行一次flush
-    if(cout_ >= flushEveryN_) {
-        count = 0;
+    if(count_ >= flushEveryN_) {
+        count_ = 0;
         file_->flush();
     }
 }
 
-void 

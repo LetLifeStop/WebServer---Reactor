@@ -23,6 +23,12 @@ class AsyncLogging : noncopyable {
           latch_.wait();
       }
 
+      void stop() {
+          running_ = false;
+          cond_.notify();
+          thread_.join();
+      }
+
       private:
         void threadFunc();
         typedef FixedBuffer<kLargeBuffer> Buffer;
@@ -38,5 +44,5 @@ class AsyncLogging : noncopyable {
         BufferPtr currentBuffer_;
         BufferPtr nextBuffer_;
         BufferVector buffers_;
-        CountDownLatch latch;
+        CountDownLatch latch_;
 };

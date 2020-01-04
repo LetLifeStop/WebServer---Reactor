@@ -9,7 +9,7 @@ using namespace std;
 
 AppendFile::AppendFile(string filename):fp_(fopen(filename.c_str(), "at+")) {
     // at+ means open or create a file and add message in the end of the file 
-    setbuffer(fp_, buffer_, sizeof(buffer));
+    setbuffer(fp_, buffer_, sizeof(buffer_));
     // the effective of setbuffer is to set the stream's buffer 
 }
 
@@ -24,7 +24,7 @@ void AppendFile::append(const char* logline, const size_t len) {
         size_t x = this->write(logline + n, remain);
         if(x == 0){
             int err = ferror(fp_);
-            if(err)
+            if(err != 0)
               fprintf(stderr, "AppendFile::append() failed !\n");
               break;
         }

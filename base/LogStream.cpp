@@ -26,14 +26,15 @@ size_t convert(char buf[], T value) {
     *p = '\0';
     // exchange the buf and p
     std::reverse(buf, p);
+    return p - buf;
 }
 
-template class FixBuffer<kSmallBuffer>;
-template class FixBuffer<kLargeNuffer>;
+template class FixedBuffer<kSmallBuffer>;
+template class FixedBuffer<kLargeBuffer>;
 
 template <typename T>
 void LogStream::formatInteger(T v) {
-  if(buffer_.avail() >= kMaxNumericSize) {
+  if(buffer_.avail() >= kMaxNumbericSize) { 
     size_t len = convert(buffer_.current(), v);
     buffer_.add(len);
   }
@@ -45,43 +46,44 @@ LogStream& LogStream::operator << (short v) {
 }
 
 LogStream& LogStream::operator << (unsigned short v) {
-  formatInterger(v);
+  formatInteger(v);
   return *this;
 }
 
 LogStream& LogStream::operator << (long v) {
-   formatInterger(v);
+   formatInteger(v);
   return *this;
 }
 
+LogStream& LogStream::operator << (int v) {
+    formatInteger(v);
+    return *this; 
+}
 LogStream& LogStream::operator << (unsigned long v) {
-   formatInterger(v);
+   formatInteger(v);
   return *this;
 }
-
 
 LogStream& LogStream::operator << (long long v) {
-   formatInterger(v);
+   formatInteger(v);
   return *this;
 }
-
 
 LogStream& LogStream::operator << (unsigned long long v) {
-   formatInterger(v);
+   formatInteger(v);
   return *this;
 }
 
-
 LogStream& LogStream::operator << (double v) {
- if(buffer_.avail() >= kMaxNumbericSize) {
-   int len = snprintf(buffer_.current(), kMaxNumbericSize, "%.12g", v);
+ if(buffer_.avail() >= kMaxNumbericSize) { 
+   int len = snprintf(buffer_.current(),kMaxNumbericSize, "%.12g", v);
    buffer_.add(len);
  }
   return *this;
 }
 
 
-LogStream& LogStream::operator << (long v) {
+LogStream& LogStream::operator << (long double v) {
    if(buffer_.avail() >= kMaxNumbericSize) {
    int len = snprintf(buffer_.current(), kMaxNumbericSize, "%.12Lg", v);
    buffer_.add(len);

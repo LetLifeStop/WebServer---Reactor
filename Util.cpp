@@ -5,6 +5,9 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <netinet/tcp.h>
 
 const int MAX_BUFF = 4096;
 
@@ -19,11 +22,11 @@ ssize_t readn(int fd, void *buff, size_t n){
               nread = 0;
             // EINTR，进程在一个慢系统调用中阻塞的时候，当捕获到某个信号处理函数返回时
             // 这个系统调用被中断，设置的errno为EINTR
-            else if(errno == EAGAIN){
+            else if(errno == EAGAIN) {
                 return readSum;
             } 
             // 在非阻塞的模式下，write或read返回-1，errno为EAGAIN，表示相应的操作还没有执行完毕
-            else{
+            else {
                 return -1;
             }
         }
@@ -33,17 +36,18 @@ ssize_t readn(int fd, void *buff, size_t n){
         nleft -= nread;
         ptr += nread;
     }
-    return readSumm;
+    return readSum;
 }
 
 ssize_t readn(int fd, std::string &inBuffer, bool &zero){
     ssize_t nread = 0;
     ssize_t readSum = 0;
-    while(true){
-        if((nwritten = write(fd, ptr, nleft)) <= 0){
+    while(true) {
+        char buff[MAX_BUFF];
+        if((nread = write(fd, buff, MAX_BUFF)) <= 0) {
             if(errno == EINTR)
               continue;
-            else if(errno == EAGAIN){
+            else if(errno == EAGAIN) {
                 return readSum;
             }
             else {
@@ -51,7 +55,7 @@ ssize_t readn(int fd, std::string &inBuffer, bool &zero){
                 return -1;
             }
         }
-        else if(nread == 0){
+        else if(nread == 0) {
           zero = 1;
           break;
         }
@@ -66,7 +70,7 @@ ssize_t readn(int fd, std::string &inBuffer){
     ssize_t readSum = 0;
     while(true){
         char buff[MAX_BUFF];
-        if((nread = read(fd, buffm MAX_BUFF)) < 0){
+        if((nread = read(fd, buff, MAX_BUFF)) < 0){
             if(errno == EINTR)
               continue;
               else if(errno == EAGAIN){
@@ -85,14 +89,14 @@ ssize_t readn(int fd, std::string &inBuffer){
    return readSum;
 }
 
-ssize_t writen(int fd, void *buff, size_t n){
+ssize_t writen(int fd, void *buff, size_t n) {
     ssize_t nleft = n;
     ssize_t nwritten = 0;
     ssize_t writeSum  = 0 ;
     char *ptr = (char *)buff;
-    while(nleft > 0){
-        if((nwritten = write(fd, ptr, nleft)) <= 0){
-            if(nwritten < 0){
+    while(nleft > 0) {
+        if((nwritten = write(fd, ptr, nleft)) <= 0) {
+            if(nwritten < 0) {
                 nwritten = 0;
                 continue;
             }
@@ -109,8 +113,8 @@ ssize_t writen(int fd, void *buff, size_t n){
     return writeSum;
 }
 
-ssize_t writen(int fd, std:string &sbuff){
-    ssize_t nleft = sbuffer.size();
+ssize_t writen(int fd, std::string &sbuff){
+    ssize_t nleft = sbuff.size();
     ssize_t nwritten = 0;
     ssize_t WriteSum = 0;
     const char *ptr = sbuff.c_str();
@@ -139,9 +143,9 @@ ssize_t writen(int fd, std:string &sbuff){
     return WriteSum;
 }
 
-void handle_for_sigpipe(){
+void handle_for_sigpipe() {
     struct sigaction sa;
-    memest(&sa, '\0', sizeof(sa));
+    memset(&sa, '\0', sizeof(sa));
     sa.sa_handler = SIG_IGN;
     // SIGIGN为忽略信号，在此处的作用是忽略SIGPIPE信号
     sa.sa_flags = 0;
@@ -150,10 +154,10 @@ void handle_for_sigpipe(){
     return ;
 }
 
-int setSocketNonBlocking(int fd){
+int setSocketNonBlocking(int fd) {
     int flag = fcntl(fd, F_GETFL, 0);
     // 获取文件描述符的文件状态标志
-    if(falg == -1)
+    if(flag == -1)
       return 01;
     flag |= O_NONBLOCK;
     if(fcntl(fd, F_SETFL, flag) == -1)
@@ -164,7 +168,7 @@ int setSocketNonBlocking(int fd){
 
 void setSocketNodelay(int fd) {
     int enable = 1;
-    setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (void *)enable, sizeof(enable));
+    setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (void *)&enable, sizeof(enable));
     // 第一个参数的作用是采用TCP协议，第二个参数的作用是禁用Nagle算法，允许小包发送
 }
 
@@ -176,24 +180,24 @@ void setSocketLinger(int fd){
     setsockopt(fd, SOL_SOCKET, SO_LINGER, (const char *)&linger_, sizeof(linger));
 }
 
-void socket_bind_listen(int port) {
+int socket_bind_listen(int port) {
     if(port < 0 || port > 65535)
       return -1;
     int listen_fd = 0;
     if((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
       return -1;
     int optval = 1;
-    if(setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1){
-        close(lsiten_fd);
+    if(setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
+        close(listen_fd);
         return -1;
     }
     // 允许端口复用
     struct sockaddr_in server_addr;
-    bzero((char *)&server_addr, sizeof(server_Addr));
+    bzero((char *)&server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons((unsigned short)port);
-    if(bind(lsten_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1){
+    if(bind(listen_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1){
         close(listen_fd);
         return -1;
     }    
@@ -205,7 +209,7 @@ void socket_bind_listen(int port) {
         close(listen_fd);
         return -1;
     }
-    return lsiten_fd;
+    return listen_fd;
 }
 
 

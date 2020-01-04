@@ -147,6 +147,42 @@ void HttpData::seperateTimer() {
     }
 }
 
+void HttpData::handleConn() {
+    seperateTimer();
+    uint32_t &events_ = channel_->getEvents();
+    if(!error_ && ConnectionState_ == H_CONNECTED) {
+        if(events_ != 0) {
+            int timeout = DEFAULT_EXPIRED_TIME;
+            if(keepAlive_) timeout = DEFAULT_KEEP_ALIVE_TIME;
+            if((events_ & EPOLLIN) && (events_ & EPOLLOUT)) {
+             // 因为已经建立了连接，如果客户端发送过来数据，ET会自动读取，所以可以将EPOLLIN去掉
+             // 如果是只有EPOLLIN，则代表有新的连接过来
+                events_ = uint32_t(0);
+                events_ |= EPOLLOUT;
+            }
+            // 当前的连接状态为连接，但是设置的是长连接，设置此时的时间为服务器端向客户端发送消息
+            events_ |= EPOLLET;
+            loop_->updatePoller(channel_, timeout);
+        }
+        else if(keepAlive_) {
+            events_ |= (EPOLLIN | EPOLLET);
+            int timeout = DEFAULT_KEEP_ALIVE_TIME;
+            loop_->updatePoller(channel_, timeout);    
+        }
+        else {
+            events_ |= (EPOLLIN | EPOLLET);
+            int timeout = DEFAULT_KEEP_ALIVE_TIME;
+            loop_->updatePoller(channel_, timeout);
+        }
+    }
+    else if(!error_ && ConnectionState_ == H_DISCONNECTING && (events_ & EPOLLOUT)) {
+        events_ |= (EPOLLOUT | EPOLLET);
+    }
+    else  {
+        loop_->runInLoop(bind(&HttpData::handleClose, shared_from_this()));
+    }
+}
+
 void HttpData::handleRead() {
     __uint32_t &events_ = channel_->getEvents();
     do {
@@ -529,14 +565,14 @@ AnalysisState HttpData::analysisRequest() {
         void *mmapRet = mmap(NULL, sbuf.st_size, PROT_READ, MAP_PRIVATE, src_fd, 0);
         close(src_fd);
         if(mmapRet == (void*) - 1) {
-            munmap(mmapRet, sbuf.st_size());
+            munmap(mmapRet, sbuf.st_size);
             outBuffer_.clear();
             handleError(fd_, 404, "Not Found");
             return ANALYSIS_ERROR;
         }
 
         char* src_addr = static_cast<char *>(mmapRet);
-        outBuffer_ += string(src_addr, src_addr + sbuf.st_size());
+        outBuffer_ += string(src_addr, src_addr + sbuf.st_size);
         munmap(mmapRet, sbuf.st_size);
         return ANALYSIS_SUCCESS;
     }

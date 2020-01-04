@@ -1,8 +1,9 @@
 #pragma once
 #include <string>
-#inlude "noncopyable.h" 
+#include "noncopyable.h" 
+using namespace std;
 // 封装了Log文件的打开，写入 和在类析构的时候关闭文件
-class AppendFile:noncopyable {
+class AppendFile : noncopyable {
     public:
       explicit AppendFile(std::string filename);
       ~AppendFile();
@@ -11,7 +12,7 @@ class AppendFile:noncopyable {
 
     private:
       size_t write(const char* logline, size_t len);
-      File* fp_;
+      FILE* fp_;
       char buffer_[64 * 1024];
 };
 

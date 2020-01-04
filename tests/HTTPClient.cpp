@@ -21,7 +21,7 @@ using namespace std;
 
 int setSocketNonBlocking1(int fd) {
     int flag = fcntl(fd, F_GETFL, 0);
-    if(falg == -1)
+    if(flag == -1)
         return -1;
     
     flag |= O_NONBLOCK;
@@ -32,7 +32,7 @@ int setSocketNonBlocking1(int fd) {
 }
 int main(int argc, char* argv[]) {
     int sockfd;
-    struct sockaddr_in servddr;
+    struct sockaddr_in servaddr;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;

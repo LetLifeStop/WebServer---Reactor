@@ -1,4 +1,4 @@
-MAINSOURCE := Main.cpp base/tests/Logging.cpp tests/HTTPClient.cpp
+MAINSOURCE := Main.cpp base/tests/LoggingTest.cpp tests/HTTPClient.cpp
 SOURCE 	:= $(wildcard *.cpp base/*.cpp tests/HTTPClient.cpp)
 # wildcard的作用是获取这三个目录下的所有的cpp文件
 override SOURCE := $(filter-out $(MAINSOURCE),$(SOURCE))	
@@ -20,13 +20,13 @@ LIBS	:= -lpthread
 # 有线程的存在
 INCLUDE	:= -I./usr/local/lib
 # 声明编译的时候引用哪个静态库,头文件搜索目录
-CFLAGS	:= -std=c++11 -g -Wall -D_PTHREADS 
+CFLAGS	:= -std=c++11    
 # 添加编译器，添加gdb调试选项， 编译后显示所有警告， 检查_PTHREADS是否被定义
 CXXFLAGS:= $(CFLAGS)
 # 将CFLANGS对应的变量们赋值给CXXFLAGS
 
 
-SUBTARGET1 := Logging
+SUBTARGET1 := LoggingTest
 SUBTARGET2 := HTTPClient
 
 #.PHONY 作用是避免和同名文件冲突，如下所示
@@ -59,10 +59,10 @@ $(TARGET) : $(OBJS) Main.o
 		$(CC) $(CFLAGS) -o  $@ $^ $(LIBS) 
 		# $@ 代表目标文件，在这里代表 TARGET
 		# $^ 代表所有的依赖文件
-$(SUBTARGET1) : $(OBJS) base/tests/Logging.o
+$(SUBTARGET1) : $(OBJS) base/tests/LoggingTest.o
 		$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 $(SUBTARGET2) : $(OBJS) tests/HTTPClient.o
-		$(cc) $(CFLAGS) -o $@ $^ $(LIBS)
+		$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 
 

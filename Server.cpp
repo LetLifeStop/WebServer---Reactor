@@ -8,7 +8,7 @@
 
 Server::Server(EventLoop* loop, int threadNum, int port) :
     loop_(loop),
-    threadNum_(threadNum_),
+    threadNum_(threadNum),
     eventLoopThreadPool_(new EventLoopThreadPool(loop_, threadNum_)),
     started_(false),
     acceptChannel_(new Channel(loop_)),
@@ -20,8 +20,7 @@ Server::Server(EventLoop* loop, int threadNum, int port) :
     if(setSocketNonBlocking(listenFd_) < 0) {
         perror("set socket non block failed");
         abort();
-    }
-
+        }
     }
 
 

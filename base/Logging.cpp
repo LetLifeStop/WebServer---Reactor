@@ -6,25 +6,30 @@
 #include <iostream>
 #include <time.h>
 #include <sys/time.h>
+using namespace std;
 
 static pthread_once_t once_control_ = PTHREAD_ONCE_INIT;
-static AsynLogging *AsynLogger_;
+static AsyncLogging *AsyncLogger_;
 
-std::string Logger::LogFileName_ = "./webServer.log";
+std::string Logger::LogFileName_ = "webServer.log";
 
+void once_init() {
+    AsyncLogger_ = new AsyncLogging(Logger::getLogFileName());
+    AsyncLogger_->start();
+}
 void output(const char* msg, int len) {
     pthread_once(&once_control_, once_init);
     AsyncLogger_->append(msg, len);
 }
 
-Logger::Impl::Impl(const char* msg, int len) :
+Logger::Impl::Impl(const char* filename, int len) :
     stream_(),
-    line_(line),
+    line_(len),
     basename_(filename){
     formatTime();
     }
 
-void Logger::Impl:formatTim() {
+void Logger::Impl::formatTime() {
     struct timeval tv;
     time_t time;
     char str_t[26] = {0};
@@ -32,7 +37,7 @@ void Logger::Impl:formatTim() {
     time = tv.tv_sec;
     struct tm* p_time = localtime(&time);
     strftime(str_t, 26, "%Y-%m-%d %H:%M:%s\n", p_time);
-    stream_ << str;
+    stream_ << str_t;
 }
 
 Logger::Logger(const char* fileName, int line) :
@@ -40,7 +45,7 @@ Logger::Logger(const char* fileName, int line) :
 { }
 
 Logger::~Logger() {
-    impl_.stream_ << " -- " << impl_.basename_ << " : " << impl.line_ << "\n";
+    impl_.stream_ << " -- " << impl_.basename_ << " : " << impl_.line_ << "\n";
     const LogStream::Buffer& buf(stream().buffer());
     output(buf.data(), buf.length());
 }

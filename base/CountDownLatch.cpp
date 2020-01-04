@@ -9,9 +9,9 @@ void CountDownLatch::wait() {
         condition_.wait();
 }
 
-void CoundDownLatch::CoundDown() {
+void CountDownLatch::CountDown() {
     MutexLockGuard lock(mutex_);
-    --count__;
+    --count_;
     if(count_ == 0) condition_.notifyAll();
     // notify是随机唤醒对象的等待池中的一个线程
     // notifyAll是唤醒对象等待池的所有线程

@@ -5,7 +5,7 @@
 
 class AsyncLogging;
 const int kSmallBuffer = 4000;
-const int kLargeNuffer = 4000 * 1000;
+const int kLargeBuffer = 4000 * 1000;
 
 template<int SIZE>
 class FixedBuffer : noncopyable {
@@ -19,6 +19,9 @@ class FixedBuffer : noncopyable {
             cur_ += len;
         }
     }
+    const char* data() const { return data_; }
+    int length() const { return static_cast<int>(cur_ - data_); }
+    char* current() { return cur_; }
     // avail() equal strlen(data_); compare with strlen(data_), this way might save time 
     int avail() const { return static_cast<int>(end() - data_); }
     
@@ -85,7 +88,7 @@ class LogStream : noncopyable {
     void staticCheck();
 
     template<typename T>
-    void formInterger(T);
+    void formatInteger(T);
 
     Buffer buffer_;
 
