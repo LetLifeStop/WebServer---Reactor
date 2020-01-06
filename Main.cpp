@@ -1,17 +1,15 @@
 #include <getopt.h>
 #include <string>
-#include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include "EventLoop.h"
 #include "Server.h"
 #include "base/Logging.h"
-using namespace std;
 
 int main(int argc, char* argv[]) {
 
     int threadNum = 4;
-    int port = 80;
+    int port = 8888;
     std::string logPath = "./WebServer.log";
 
     int opt;
@@ -27,10 +25,10 @@ int main(int argc, char* argv[]) {
             }
             case 'l': {
                 logPath = optarg;
-                if(logPath.size() < 2 || optarg[0] != '/') {
-                    printf("logPath should start with \"/\"\n");
-                    abort();
-                }
+//                if(logPath.size() < 2 || optarg[0] != '/') {
+//                    printf("logPath should start with \"/\"\n");
+//                    abort();
+//                }
                 break;
             }
             case 'p': {
@@ -44,14 +42,18 @@ int main(int argc, char* argv[]) {
     // set the name of LogFile 
     Logger::setLogFileName(logPath);
    // printf("2\n");
+    printf("threadNum = %d, port = %d\n", threadNum, port);
+    printf("1111\n");
 //    std::cout << 2 << std::endl;
-#ifndef _PTREADS
+//#ifndef _PTREADS
 // ifndef means if not define 
-    LOG << "PTHREAD is not defined !";
-#endif
-
+//    LOG << "PTHREAD is not defined !";
+//#endif
+    printf("1\n");
     EventLoop mainLoop;
+    printf("2\n");
     Server myHTTPServer(&mainLoop, threadNum, port);
+    printf("3\n");
     myHTTPServer.start();
     mainLoop.loop();
     return 0;
