@@ -34,7 +34,7 @@ void Epoll::epoll_add(SP_Channel request, int timeout) {
     struct epoll_event event;
     event.data.fd = fd;
     event.events = request->getEvents();
-
+  //  printf("the fd is %d\n", fd);
     request->EqualAndUpdateLastEvents();
 
     fd2chan_[fd] = request;
@@ -46,9 +46,9 @@ void Epoll::epoll_add(SP_Channel request, int timeout) {
 }
 
 void Epoll::epoll_mod(SP_Channel request, int timeout) {
-    int fd = request->getFd();
     if(timeout > 0)
       add_timer(request, timeout);
+    int fd = request->getFd();
     if(!request->EqualAndUpdateLastEvents()) {
     // 为什么是不相等的时候才进行更新 ???
         struct epoll_event event;

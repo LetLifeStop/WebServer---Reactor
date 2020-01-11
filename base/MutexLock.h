@@ -19,13 +19,15 @@ class MutexLock: noncopyable {
 
     private:
       pthread_mutex_t mutex;
-
+   
+    private:
+    friend class Condition;
 };
 
 class MutexLockGuard: noncopyable {
 public:
     explicit MutexLockGuard(MutexLock &_mutex) : mutex(_mutex) { mutex.lock(); }
-    ~MutexLockGuard() { mutex.lock(); }
+    ~MutexLockGuard() { mutex.unlock(); }
 
 private:
     MutexLock &mutex;

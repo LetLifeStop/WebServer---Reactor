@@ -19,7 +19,9 @@ class Condition : noncopyable {
     // send signal to one thread
     void notify() { pthread_cond_signal(&cond); }
     // send signal to all thread
-    void notifyAll() { pthread_cond_broadcast(&cond); }
+    void notifyAll() { 
+     pthread_cond_broadcast(&cond); 
+    }
     bool waitForSeconds(int seconds){
         // struct timespec{
         //   time_t tv_sec;

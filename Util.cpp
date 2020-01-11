@@ -44,7 +44,7 @@ ssize_t readn(int fd, std::string &inBuffer, bool &zero){
     ssize_t readSum = 0;
     while(true) {
         char buff[MAX_BUFF];
-        if((nread = write(fd, buff, MAX_BUFF)) <= 0) {
+        if((nread = read(fd, buff, MAX_BUFF)) < 0) {
             if(errno == EINTR)
               continue;
             else if(errno == EAGAIN) {
@@ -97,15 +97,17 @@ ssize_t writen(int fd, void *buff, size_t n) {
     while(nleft > 0) {
         if((nwritten = write(fd, ptr, nleft)) <= 0) {
             if(nwritten < 0) {
+                if(errno == EINTR) {
                 nwritten = 0;
                 continue;
-            }
+                }
             else if(errno == EAGAIN){
                 return writeSum;
             }
             else 
                 return -1;
         }
+    }
         writeSum += nwritten;
         nleft -= nwritten;
         ptr += nwritten;
@@ -158,10 +160,9 @@ int setSocketNonBlocking(int fd) {
     int flag = fcntl(fd, F_GETFL, 0);
     // 获取文件描述符的文件状态标志
     if(flag == -1)
-      return 01;
+      return -1;
     flag |= O_NONBLOCK;
     if(fcntl(fd, F_SETFL, flag) == -1)
-    // 设置文件喵师傅的文件状态标志
         return -1;
     return 0;
 }
@@ -177,7 +178,11 @@ void setSocketLinger(int fd){
     linger_.l_onoff = 1;
     linger_.l_linger = 30;
     // https://www.cnblogs.com/caosiyang/archive/2012/03/29/2422956.html
-    setsockopt(fd, SOL_SOCKET, SO_LINGER, (const char *)&linger_, sizeof(linger));
+    setsockopt(fd, SOL_SOCKET, SO_LINGER, (const char *)&linger_, sizeof(linger_));
+}
+
+void shutDownWR(int fd) {
+    shutdown(fd, SHUT_WR);
 }
 
 int socket_bind_listen(int port) {
@@ -197,16 +202,17 @@ int socket_bind_listen(int port) {
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons((unsigned short)port);
-    printf("111111 PORT = %d\n", port);
 //    std::cout << "111111 PORT = " << port << std::endl;
     if(bind(listen_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1){
+        printf("bind error\n");
         close(listen_fd);
         return -1;
-    }    
+    }
     if(listen(listen_fd, 2048) == -1){
         close(listen_fd);
-        return 01;
+        return -1;
     }
+
     if(listen_fd == -1){
         close(listen_fd);
         return -1;

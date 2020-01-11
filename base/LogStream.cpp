@@ -46,8 +46,8 @@ LogStream& LogStream::operator << (short v) {
 }
 
 LogStream& LogStream::operator << (unsigned short v) {
-  formatInteger(v);
-  return *this;
+  *this << static_cast<unsigned int>(v);
+    return *this;
 }
 
 LogStream& LogStream::operator << (long v) {
@@ -59,6 +59,12 @@ LogStream& LogStream::operator << (int v) {
     formatInteger(v);
     return *this; 
 }
+
+LogStream& LogStream::operator << (unsigned int v) {
+    formatInteger(v);
+    return *this;
+}
+
 LogStream& LogStream::operator << (unsigned long v) {
    formatInteger(v);
   return *this;

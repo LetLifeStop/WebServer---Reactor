@@ -92,7 +92,7 @@ class HttpData : public std::enable_shared_from_this<HttpData> {
       void linkTimer(std::shared_ptr<TimerNode> mtimer){
           timer_ = mtimer;
       }
-      std::shared_ptr<Channel>getChannel(){ return channel_; }
+      std::shared_ptr<Channel>getChannel() {return channel_;}
       EventLoop *getLoop() { return loop_; }
       void handleClose();
       void newEvent();

@@ -22,8 +22,7 @@ TimerNode::~TimerNode() {
 }
 
 TimerNode::TimerNode(TimerNode &tn) :
-    SPHttpData(tn.SPHttpData),
-    expiredTime_(0) {}
+    SPHttpData(tn.SPHttpData) {}
 
 void TimerNode::update(int timeout) {
     struct timeval now;
@@ -34,7 +33,7 @@ void TimerNode::update(int timeout) {
 bool TimerNode::isValid() {
     struct timeval now;
     gettimeofday(&now, NULL);
-    size_t tmp =((now.tv_sec % 10000) * 10000) + (now.tv_usec / 1000);
+    size_t tmp =((now.tv_sec % 10000) * 1000) + (now.tv_usec / 1000);
     if(tmp < expiredTime_)
         return true;
     else {
@@ -54,18 +53,18 @@ TimerManager::~TimerManager() {}
 
 void TimerManager::addTimer(std::shared_ptr<HttpData> SPHttpData, int timeout) {
     SPTimerNode new_node(new TimerNode(SPHttpData, timeout));
-    TimerNodeQueue.push(new_node);
+    timerNodeQueue.push(new_node);
     SPHttpData->linkTimer(new_node);
 }
 
 void TimerManager::handleExpiredEvent() {
     // deal with the useless event 
-    while(!TimerNodeQueue.empty()) {
-        SPTimerNode ptimer_now = TimerNodeQueue.top();
+    while(!timerNodeQueue.empty()) {
+        SPTimerNode ptimer_now = timerNodeQueue.top();
         if(ptimer_now->isDeleted())
-            TimerNodeQueue.pop();
+            timerNodeQueue.pop();
         else if(ptimer_now->isValid() == false)
-            TimerNodeQueue.pop();
+            timerNodeQueue.pop();
         else 
             break;
     }

@@ -32,7 +32,7 @@ EventLoop::EventLoop():
       }
       else 
         t_loopInthisThread = this;
-
+    
     pwakeupChannel_->setEvents(EPOLLIN | EPOLLET);
     pwakeupChannel_->setReadHandler(bind(&EventLoop::handleRead, this));
     pwakeupChannel_->setConnHandler(bind(&EventLoop::handleConn, this));
@@ -51,16 +51,19 @@ EventLoop::~EventLoop() {
 void EventLoop::wakeup() {
     uint64_t one = 1;
     ssize_t n = writen(wakeupFd_, (char*)(&one), sizeof(one));
+    printf("wake up\n");
     if(n != sizeof(one)) {
         LOG << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
     }
 }
 void EventLoop::handleRead() {
     uint64_t one = 1;
+    printf("handle Read in EventLoop\n");
     ssize_t n = readn(wakeupFd_, &one, sizeof(one));
     if(n != sizeof(one)) {
         LOG << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
     }
+    pwakeupChannel_->setEvents(EPOLLIN | EPOLLET);
 }
 
 void EventLoop::runInLoop(Functor&& cb) {
@@ -85,7 +88,7 @@ void EventLoop::queueInLoop(Functor&& cb) {
 
 void EventLoop::loop() {
     assert(!looping_);
-    assert(!isInLoopThread());
+    assert(isInLoopThread());
     looping_ = true;
     quit_ = false;
     std::vector<SP_Channel> ret;
@@ -111,7 +114,6 @@ void EventLoop::doPendingFunctors() {
         MutexLockGuard lock(mutex_);
         functors.swap(pendingFunctors_);
     }
-
     for(size_t i = 0; i < functors.size(); i++) {
         functors[i]();
     }

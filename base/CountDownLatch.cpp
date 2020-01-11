@@ -5,15 +5,20 @@ CountDownLatch::CountDownLatch(int count):
 
 void CountDownLatch::wait() {
     MutexLockGuard lock(mutex_);
-    while( count_ > 0)
-        condition_.wait();
+    while(count_ > 0) {
+    //    printf("121112121213\n");
+        condition_.wait(); 
+    }
 }
 
 void CountDownLatch::CountDown() {
     MutexLockGuard lock(mutex_);
-    --count_;
-    if(count_ == 0) condition_.notifyAll();
-    // notify是随机唤醒对象的等待池中的一个线程
+//    printf("CountDown and the count_ is %d\n", count_);
+    count_--;
+//    printf("CoundDown after the count_ is %d\n", count_);
+    if(count_ == 0) {
+        condition_.notifyAll();
+    }
     // notifyAll是唤醒对象等待池的所有线程
 }
 

@@ -27,7 +27,7 @@ class EventLoop {
         return threadId_ == CurrentThread::tid();  
     }
     // 如果条件返回错误，终止程序的执行
-    bool assertInLoopThread() {
+    void assertInLoopThread() {
         assert(isInLoopThread());
     }
     // 禁止在一个套接口上进行读写操作

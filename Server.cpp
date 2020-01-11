@@ -14,6 +14,7 @@ Server::Server(EventLoop* loop, int threadNum, int port) :
     acceptChannel_(new Channel(loop_)),
     port_(port),
     listenFd_(socket_bind_listen(port_)) {
+    //    printf("start to socket bind listen\n");
         acceptChannel_->setFd(listenFd_);
         handle_for_sigpipe();
 
@@ -21,6 +22,7 @@ Server::Server(EventLoop* loop, int threadNum, int port) :
         perror("set socket non block failed");
         abort();
         }
+     //   printf("init the listenfd ended!\n");
     }
 
 
@@ -40,6 +42,7 @@ void Server::handNewConn() {
     int accept_fd = 0;
     while((accept_fd = accept(listenFd_, (struct sockaddr *)&client_addr, &client_addr_len)) > 0) {
         EventLoop* loop = eventLoopThreadPool_->getNextLoop();
+      //  printf("%d\n", client_addr.sin_port);  
         LOG << "New connection from " << inet_ntoa(client_addr.sin_addr) << ";" << ntohs(client_addr.sin_port);
 
         if(accept_fd >= MAXFDS) {

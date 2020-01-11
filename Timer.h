@@ -44,6 +44,6 @@ class TimerManager {
 
   private:
     typedef std::shared_ptr<TimerNode> SPTimerNode;
-    std::priority_queue<SPTimerNode, std::deque<SPTimerNode>, TimerCmp> TimerNodeQueue;
+    std::priority_queue<SPTimerNode, std::deque<SPTimerNode>, TimerCmp> timerNodeQueue;
 };
 

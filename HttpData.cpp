@@ -120,6 +120,7 @@ HttpData::HttpData(EventLoop *loop, int connfd) :
     state_(STATE_PARSE_URI),
     hState_(H_START),
     keepAlive_(false) {
+        printf("fuzhi in the HttpData\n");
         channel_->setReadHandler(bind(&HttpData::handleRead, this));
         channel_->setWriteHandler(bind(&HttpData::handleWrite, this));
         channel_->setConnHandler(bind(&HttpData::handleConn, this));
@@ -141,7 +142,7 @@ void HttpData::reset() {
 
 void HttpData::seperateTimer() {
     if(timer_.lock()) {
-        shared_ptr<TimerNode> my_timer(timer_.lock());
+        std::shared_ptr<TimerNode> my_timer(timer_.lock());
         my_timer->clearReq();
         timer_.reset();
     }
@@ -149,7 +150,7 @@ void HttpData::seperateTimer() {
 
 void HttpData::handleConn() {
     seperateTimer();
-    uint32_t &events_ = channel_->getEvents();
+    __uint32_t &events_ = channel_->getEvents();
     if(!error_ && ConnectionState_ == H_CONNECTED) {
         if(events_ != 0) {
             int timeout = DEFAULT_EXPIRED_TIME;
@@ -157,7 +158,7 @@ void HttpData::handleConn() {
             if((events_ & EPOLLIN) && (events_ & EPOLLOUT)) {
              // 因为已经建立了连接，如果客户端发送过来数据，ET会自动读取，所以可以将EPOLLIN去掉
              // 如果是只有EPOLLIN，则代表有新的连接过来
-                events_ = uint32_t(0);
+                events_ = __uint32_t(0);
                 events_ |= EPOLLOUT;
             }
             // 当前的连接状态为连接，但是设置的是长连接，设置此时的时间为服务器端向客户端发送消息
@@ -171,7 +172,7 @@ void HttpData::handleConn() {
         }
         else {
             events_ |= (EPOLLIN | EPOLLET);
-            int timeout = DEFAULT_KEEP_ALIVE_TIME;
+            int timeout = (DEFAULT_KEEP_ALIVE_TIME >> 1);
             loop_->updatePoller(channel_, timeout);
         }
     }
@@ -184,17 +185,18 @@ void HttpData::handleConn() {
 }
 
 void HttpData::handleRead() {
+    printf("handle Read in HttpData\n");
     __uint32_t &events_ = channel_->getEvents();
     do {
     bool zero = false;
-    int read_sum = readn(fd_, inBuffer_, zero);
-    LOG << "Request:" << inBuffer_;
+    int read_num = readn(fd_, inBuffer_, zero);
+    LOG << "\nRequest:\n" << inBuffer_;
     if(ConnectionState_  == H_DISCONNECTING) {
         inBuffer_.clear();
         break;
     }
 
-    if(read_sum < 0) {
+    if(read_num < 0) {
         perror("1");
         error_ = 1;
         handleError(fd_, 400, "Bad request");
@@ -205,7 +207,7 @@ void HttpData::handleRead() {
     else if(zero) {
     // get the request but do not receive the data, regard this case as client already closed
     ConnectionState_ = H_DISCONNECTING;
-    if(read_sum == 0){
+    if(read_num == 0){
         break;
         }
     }
@@ -269,6 +271,7 @@ void HttpData::handleRead() {
         }
         else {
             error_ = true;
+            break;
         }
      }
     }while(false);
@@ -285,15 +288,16 @@ void HttpData::handleRead() {
                     handleRead();
             }
         }
-        else if(!error_ &&  ConnectionState_ != H_DISCONNECTING) {
+        else if(!error_ &&  ConnectionState_ != H_DISCONNECTED) {
             events_ |= EPOLLIN;
         }
     }
 }
 
 void HttpData::handleWrite() {
-    if(!error_ && ConnectionState_ != H_DISCONNECTING) {
-        uint32_t &events_ = channel_->getEvents();
+    printf ("handleWrite in HttpData\n");
+    if(!error_ && ConnectionState_ != H_DISCONNECTED) {
+        __uint32_t &events_ = channel_->getEvents();
             if(writen(fd_, outBuffer_) < 0) {
                 perror("Writen");
                 events_ = 0;
@@ -336,8 +340,9 @@ URIState HttpData::parseURI() {
         pos = posHead;
         method_ = METHOD_HEAD;
     }
-    else 
+    else {
         return PARSE_URI_ERROR;
+    }
 
     pos = request_line.find("/", pos);
     //analyse the filename ? url  
@@ -347,15 +352,15 @@ URIState HttpData::parseURI() {
         return PARSE_URI_SUCCESS;
     }
     else {
-        size_t _pos = request_line.find("/", pos);
+        size_t _pos = request_line.find(" ", pos);
         if(_pos < 0) {
             return PARSE_URI_ERROR; 
         }
         else {
             if(_pos - pos > 1) {
                 fileName_ = request_line.substr(pos + 1, _pos - pos - 1);
-                size_t __pos = fileName_.find('?');
-                if(__pos == 0) {
+                size_t __pos = fileName_.find("?");
+                if(__pos >= 0) {
                     fileName_ = fileName_.substr(0, __pos);
                 }
             }
@@ -422,11 +427,13 @@ HeaderState HttpData::parseHeaders() {
 
         case H_COLON: {
        // the signal :
-          if(str[i] == ':') {
+          if(str[i] == ' ') {
             hState_ = H_SPACE_AFTER_COLON;
           }
-          else
+          else {
             return PARSE_HEADER_ERROR;
+          }
+        break;
         }
 
         case H_SPACE_AFTER_COLON: {
@@ -458,6 +465,7 @@ HeaderState HttpData::parseHeaders() {
           }
           else 
               return PARSE_HEADER_ERROR;
+          break;
         }
 
         case H_LF: {
@@ -502,17 +510,18 @@ HeaderState HttpData::parseHeaders() {
 
 
 AnalysisState HttpData::analysisRequest() {
+    printf("analysisRequest\n");
     if(method_ == METHOD_POST) {
 
     }
     else if(method_ ==  METHOD_GET || method_ == METHOD_HEAD) {
         string header;
         header += "HTTP/1.1 200 OK\n";
-        if(headers_.find("Connection") != headers_.end() && (headers_["Connection"] == "Keep-Alive" || headers_["Connection"] == "Keep-Alive")) {
+        if(headers_.find("Connection") != headers_.end() && (headers_["Connection"] == "Keep-Alive" || headers_["Connection"] == "Keep-alive")) {
             keepAlive_ = true;
              header += string("Connection:Keep-Alive\r\n") + "Keep_Alive:timeout=" + to_string(DEFAULT_KEEP_ALIVE_TIME) +"\r\n";
         }
-        int dot_pos = fileName_.find('.');
+        int dot_pos = fileName_.find(".");
         string filetype;
         if(dot_pos < 0) {
             filetype = MimeType::getMime("default");
@@ -521,6 +530,7 @@ AnalysisState HttpData::analysisRequest() {
             filetype = MimeType::getMime(fileName_.substr(dot_pos));
         // test start  
         if(fileName_ == "hello") {
+            printf("this is hello\n");
             outBuffer_ =  "HTTP/1.1 200 OK\r\nContent-type: text/plain\r\n\r\nHello World";
             return ANALYSIS_SUCCESS;
         }
@@ -528,7 +538,7 @@ AnalysisState HttpData::analysisRequest() {
         if(fileName_ == "favicon.ico") {
             header += "Content-Type:image/png\r\n";
             header += "Content-Length:" + to_string(sizeof(favicon)) + "\r\n";
-            header += "Server:Let_Life_Stop's Web Server\r\n";
+            header += "Server:Let_Life_Stop's Web Server";
 
             header += "\r\n";
             outBuffer_ += header;
@@ -564,7 +574,7 @@ AnalysisState HttpData::analysisRequest() {
 
         void *mmapRet = mmap(NULL, sbuf.st_size, PROT_READ, MAP_PRIVATE, src_fd, 0);
         close(src_fd);
-        if(mmapRet == (void*) - 1) {
+        if(mmapRet == (void*)(-1)) {
             munmap(mmapRet, sbuf.st_size);
             outBuffer_.clear();
             handleError(fd_, 404, "Not Found");
@@ -584,7 +594,7 @@ void HttpData::handleError(int fd, int err_num, string short_msg) {
     char send_buff[4096];
     string body_buff, header_buff;
     body_buff += "<html><title>Problem occured!</title>";
-    body_buff += "<body bgcolor=\"ffffff\>";
+    body_buff += "<body bgcolor=\"ffffff\">";
     body_buff += to_string(err_num) + short_msg;
     body_buff += "<hr><em>Let_Life_Stop's Web Server</em>\n</body></html>";
 
@@ -593,6 +603,7 @@ void HttpData::handleError(int fd, int err_num, string short_msg) {
     header_buff += "Connection:close\r\n";
     header_buff += "Content-Length:" + to_string(body_buff.size()) + "\r\n";
     header_buff += "Server:Let_Life_Stop's web Server\r\n";
+    header_buff += "\r\n";
 
     sprintf(send_buff, "%s", header_buff.c_str());
     writen(fd, send_buff, strlen(send_buff));
@@ -610,9 +621,3 @@ void HttpData::newEvent() {
     channel_->setEvents(DEFAULT_EVENT);
     loop_->addToPoller(channel_, DEFAULT_EXPIRED_TIME);
 }
-
-
-
-        
-
-

@@ -2,6 +2,7 @@
 
 EventLoopThreadPool::EventLoopThreadPool(EventLoop *baseLoop, int numThread):
         baseLoop_(baseLoop), started_(false), numThreads_(numThread), next_(0) {
+        //   printf("create EventLoopThread Pool ok! and the numThreads_ is %d\n", numThreads_);
         if(numThreads_ <= 0){
             LOG << "numThreads_ <= 0";
             abort();

@@ -26,6 +26,8 @@ void AppendFile::append(const char* logline, const size_t len) {
             int err = ferror(fp_);
             if(err != 0)
               fprintf(stderr, "AppendFile::append() failed !\n");
+
+
               break;
         }
         n += x;

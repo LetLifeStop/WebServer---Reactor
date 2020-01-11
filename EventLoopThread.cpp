@@ -30,10 +30,13 @@ EventLoop* EventLoopThread::startLoop() {
 void EventLoopThread::threadFunc() {
     EventLoop loop;
     
+    {
     MutexLockGuard lock(mutex_);
     loop_ = &loop;
     cond_.notify();
     // notify 的作用是唤醒线程
+    }
+
     loop.loop();
     loop_ = NULL;
 }

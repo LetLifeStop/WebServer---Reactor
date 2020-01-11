@@ -47,7 +47,6 @@ struct ThreadData {
         tid_ = NULL;
         latch_->CountDown();
         latch_ = NULL;
-
         CurrentThread::t_threadName = name_.empty() ? "thread" : name_.c_str();
         prctl(PR_SET_NAME, CurrentThread::t_threadName);
         // 把参数CurrentThread::t_threadName作为进程名
@@ -55,10 +54,9 @@ struct ThreadData {
         CurrentThread::t_threadName = "finished";
     }
 };
-
-
 void* startThread(void* obj) {
     ThreadData* data = static_cast<ThreadData*>(obj);
+//   printf("* startThread!\n");
     data->runInThread();
     delete data;
     return NULL;
@@ -92,6 +90,7 @@ void Thread::start() {
     started_ = 1;
     ThreadData* data = new ThreadData(func_, name_, &tid_, &latch_); 
     if(pthread_create(&pthreadId_, NULL, &startThread, data)) {
+        printf("create thread error\n");
         started_ = false;
         delete data;
     }

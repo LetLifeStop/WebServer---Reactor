@@ -21,10 +21,10 @@ class Channel{
     EventLoop *loop_;
     // 文件描述符
     int fd_;
-    uint32_t events_;
+    __uint32_t events_;
     // poll/epoll 返回的事件
-    uint32_t revents_;
-    uint32_t lastEvents_;
+    __uint32_t revents_;
+    __uint32_t lastEvents_;
 
     std::weak_ptr<HttpData> holder_;
 
@@ -71,6 +71,11 @@ class Channel{
             connHandler_ = connHandler;
         }
 
+        void handleRead();
+        void handleWrite();
+        void handleConn();
+        void handleError(int fd, int err_num, std::string short_msg);
+        
         void handleEvents(){
             //根据事件类型进行分发
             events_ = 0;
@@ -79,9 +84,16 @@ class Channel{
                 events_ = 0;
                 return ;
             }
+            
+            if(revents_ & EPOLLERR) {
+               if(errorHandler_) errorHandler_();
+                events_  = 0;
+                return ;
+            }
             // 有连接或者数据来临， 对应的文件描述符有紧急的数据可读
             // 对 EPOLLHUP和EPOLLRDHUP 的一个对比 https://codeday.me/bug/20190228/692013.html            
-            if(revents_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)){
+            if(revents_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) {
+                printf("handle Read in channel\n");
                 handleRead();
             }
             // 有数据通过文件描述符写入
@@ -92,20 +104,16 @@ class Channel{
             handleConn();
         }
 
-        void handleRead();
-        void handleWrite();
-        void handleConn();
-        void handleError(int fd, int err_num, std::string short_msg);
 
-        void setRevents(uint32_t ev){
+        void setRevents(__uint32_t ev){
             revents_ = ev;
         }
 
-        void setEvents(uint32_t ev){
+        void setEvents(__uint32_t ev){
             events_ = ev;
         }
     
-        uint32_t &getEvents() {
+        __uint32_t &getEvents(){
             return events_;
         }
 
@@ -115,7 +123,7 @@ class Channel{
             return ret;
         }
         
-        uint32_t getLastEvents(){
+        __uint32_t getLastEvents(){
             return lastEvents_;
         }
 };
